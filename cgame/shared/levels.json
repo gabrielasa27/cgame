@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "legend": "R = inicio del robot, G = meta, # = roca, * = estrella, . = casilla libre",
+  "games": [
+    {
+      "id": "G1",
+      "name": "Ruta del Robot",
+      "type": "grid",
+      "area": "Secuencias",
+      "color": "blue",
+      "description": "Dale instrucciones a Cody para que llegue a la bandera.",
+      "objective": "Ordenar instrucciones paso a paso para resolver un recorrido."
+    },
+    {
+      "id": "G2",
+      "name": "Estrellas en Camino",
+      "type": "grid",
+      "area": "Planificación",
+      "color": "sun",
+      "description": "Cody debe recoger todas las estrellas y después llegar a la bandera.",
+      "objective": "Planificar una secuencia que cumple varias metas."
+    },
+    {
+      "id": "G3",
+      "name": "Ordena los Pasos",
+      "type": "order",
+      "area": "Orden lógico",
+      "color": "violet",
+      "description": "Pon las tarjetas en el orden correcto, como en una receta.",
+      "objective": "Reconocer el orden lógico de una secuencia de acciones."
+    }
+  ],
+  "levels": [
+    {
+      "id": "G1-L1", "game_id": "G1", "number": 1, "difficulty": "Básico",
+      "title": "Primer recorrido",
+      "instructions": "Toca las flechas para armar el programa de Cody. Luego pulsa Ejecutar y mira si llega a la bandera.",
+      "par_time": 40, "max_slots": 9,
+      "grid": ["R...", ".#..", "...G", "...."]
+    },
+    {
+      "id": "G1-L2", "game_id": "G1", "number": 2, "difficulty": "Intermedio",
+      "title": "Camino de rocas",
+      "instructions": "Hay más rocas en el camino. Piensa el recorrido completo antes de poner las flechas.",
+      "par_time": 75, "max_slots": 11,
+      "grid": ["R..#.", ".#...", "...#.", ".#...", "...#G"]
+    },
+    {
+      "id": "G1-L3", "game_id": "G1", "number": 3, "difficulty": "Avanzado",
+      "title": "El laberinto",
+      "instructions": "Ahora tienes pocas casillas para tu programa. Busca el camino más corto.",
+      "par_time": 120, "max_slots": 14,
+      "grid": ["R.#...", ".##..#", "..#...", ".#....", "...#..", "#..#.G"]
+    },
+    {
+      "id": "G2-L1", "game_id": "G2", "number": 1, "difficulty": "Básico",
+      "title": "Una estrella",
+      "instructions": "Recoge la estrella y luego llega a la bandera. Las estrellas se recogen al pasar por ellas.",
+      "par_time": 50, "max_slots": 10,
+      "grid": ["R...", ".*..", "....", "...G"]
+    },
+    {
+      "id": "G2-L2", "game_id": "G2", "number": 2, "difficulty": "Intermedio",
+      "title": "Dos estrellas",
+      "instructions": "Hay dos estrellas. Planea en qué orden las vas a recoger antes de llegar a la bandera.",
+      "par_time": 90, "max_slots": 13,
+      "grid": ["R....", ".#.#.", ".....", "*#..#", "..#*G"]
+    },
+    {
+      "id": "G2-L3", "game_id": "G2", "number": 3, "difficulty": "Avanzado",
+      "title": "Tres estrellas",
+      "instructions": "Tres estrellas y pocas casillas. Escoge un recorrido corto que pase por todas.",
+      "par_time": 150, "max_slots": 18,
+      "grid": ["R...*.", "#....#", "..##..", ".*..#.", ".*...#", "..##.G"]
+    },
+    {
+      "id": "G3-L1", "game_id": "G3", "number": 1, "difficulty": "Básico",
+      "title": "Lavarse las manos",
+      "instructions": "Toca las tarjetas en el orden correcto para lavarte las manos. Luego pulsa Comprobar.",
+      "par_time": 30, "max_slots": 4,
+      "steps": [
+        {"icon": "🚰", "text": "Abre la llave y moja tus manos"},
+        {"icon": "🧼", "text": "Ponte jabón y frota"},
+        {"icon": "💦", "text": "Enjuágate con agua"},
+        {"icon": "🧻", "text": "Sécate con la toalla"}
+      ]
+    },
+    {
+      "id": "G3-L2", "game_id": "G3", "number": 2, "difficulty": "Intermedio",
+      "title": "Preparar jugo de naranja",
+      "instructions": "Ordena los pasos para preparar un jugo de naranja. Piensa qué se hace primero.",
+      "par_time": 45, "max_slots": 5,
+      "steps": [
+        {"icon": "🍊", "text": "Lava las naranjas"},
+        {"icon": "🔪", "text": "Corta las naranjas por la mitad"},
+        {"icon": "🤲", "text": "Exprime las naranjas"},
+        {"icon": "🥛", "text": "Sirve el jugo en un vaso"},
+        {"icon": "😋", "text": "Toma tu jugo"}
+      ]
+    },
+    {
+      "id": "G3-L3", "game_id": "G3", "number": 3, "difficulty": "Avanzado",
+      "title": "Sembrar una planta",
+      "instructions": "Ordena los seis pasos para sembrar una planta. Cada paso depende del anterior.",
+      "par_time": 60, "max_slots": 6,
+      "steps": [
+        {"icon": "🪴", "text": "Llena la maceta con tierra"},
+        {"icon": "👆", "text": "Haz un huequito con el dedo"},
+        {"icon": "🌰", "text": "Pon la semilla"},
+        {"icon": "🤏", "text": "Tápala con tierra"},
+        {"icon": "💧", "text": "Échale agua"},
+        {"icon": "🌻", "text": "Mira cómo crece tu planta"}
+      ]
+    }
+  ]
+}

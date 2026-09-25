@@ -1,0 +1,73 @@
+{
+  "final": {
+    "kernel": "linear",
+    "C": 0.1,
+    "target": 0.92,
+    "target_met": true,
+    "test_precision": 0.9339,
+    "test_recall": 0.928,
+    "test_accuracy": 0.9278,
+    "samples": 4500,
+    "iterations": 3,
+    "trained_on": "casos simulados (ver recommender/simulate.py)"
+  },
+  "history": [
+    {
+      "iteration": 1,
+      "samples": 1500,
+      "C": 1,
+      "cv_f1": 0.9301,
+      "test_accuracy": 0.91,
+      "test_precision": 0.9281,
+      "test_recall": 0.8987,
+      "confusion_matrix": [
+        [
+          131,
+          11
+        ],
+        [
+          16,
+          142
+        ]
+      ]
+    },
+    {
+      "iteration": 2,
+      "samples": 3000,
+      "C": 1,
+      "cv_f1": 0.936,
+      "test_accuracy": 0.9083,
+      "test_precision": 0.9071,
+      "test_recall": 0.9159,
+      "confusion_matrix": [
+        [
+          262,
+          29
+        ],
+        [
+          26,
+          283
+        ]
+      ]
+    },
+    {
+      "iteration": 3,
+      "samples": 4500,
+      "C": 0.1,
+      "cv_f1": 0.9235,
+      "test_accuracy": 0.9278,
+      "test_precision": 0.9339,
+      "test_recall": 0.928,
+      "confusion_matrix": [
+        [
+          397,
+          31
+        ],
+        [
+          34,
+          438
+        ]
+      ]
+    }
+  ]
+}

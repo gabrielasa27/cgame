@@ -1,0 +1,20 @@
+# Despliegue en Render.com (plan gratuito): sube el proyecto a GitHub, en Render elige
+# "New +" -> "Blueprint" y selecciona el repo; este archivo configura el servicio solo.
+services:
+  - type: web
+    name: cgame-api
+    runtime: docker
+    dockerfilePath: ./backend/server/Dockerfile
+    dockerContext: ..
+    plan: free
+    envVars:
+      - key: CGAME_SECRET_KEY
+        generateValue: true
+      - key: CGAME_CORS_ORIGIN
+        value: "*"
+      - key: CGAME_DB_PATH
+        value: /var/data/cgame.db
+    disk:
+      name: cgame-data
+      mountPath: /var/data
+      sizeGB: 1
