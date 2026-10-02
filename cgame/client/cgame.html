@@ -1,0 +1,1542 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CGAME · Programa a Cody y resuelve retos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- Tokens ---------- */
+:root{
+  --paper:#F5F8FF; --gridline:rgba(47,107,255,.12);
+  --ink:#1B2140; --ink2:#4B557D; --outline:#1B2140;
+  --card:#FFFFFF; --card2:#EAF0FF; --line:#C9D3F0;
+  --blue:#2F6BFF; --blue-d:#1C45B8;
+  --sun:#FFC22E; --sun-d:#B98600; --sun-ink:#3A2A00;
+  --mint:#14A768; --mint-d:#0B6F44;
+  --coral:#F0483B; --coral-d:#A92A20;
+  --violet:#7B5BF7; --violet-d:#4B31B8;
+  --orange:#F28A1E; --orange-d:#A85A06;
+  --good-bg:#DDF6EA; --bad-bg:#FFE3E0; --warn-bg:#FFF1CC;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#10152B; --gridline:rgba(140,170,255,.09);
+    --ink:#EEF1FF; --ink2:#A9B3DA; --outline:#070A18;
+    --card:#1B2247; --card2:#242D5C; --line:#3A447E;
+    --good-bg:#12382A; --bad-bg:#4A1E1F; --warn-bg:#4A3A10;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10152B; --gridline:rgba(140,170,255,.09);
+  --ink:#EEF1FF; --ink2:#A9B3DA; --outline:#070A18;
+  --card:#1B2247; --card2:#242D5C; --line:#3A447E;
+  --good-bg:#12382A; --bad-bg:#4A1E1F; --warn-bg:#4A3A10;
+}
+
+/* ---------- Base ---------- */
+*,*::before,*::after{box-sizing:border-box}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);min-height:100%}
+body{
+  margin:0;min-height:100%;
+  font-family:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;font-size:18px;line-height:1.4;
+  color:var(--ink);background-color:var(--paper);
+  background-image:linear-gradient(var(--gridline) 1px,transparent 1px),linear-gradient(90deg,var(--gridline) 1px,transparent 1px);
+  background-size:28px 28px;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p{margin:0}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:4px solid var(--violet);outline-offset:3px}
+[tabindex="-1"]:focus{outline:none}
+.screen{max-width:1000px;margin:0 auto;padding:20px 18px 56px}
+.screen[hidden],[hidden]{display:none !important}
+.muted{color:var(--ink2)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- Botones tipo tecla ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;text-align:center;
+  min-height:60px;padding:12px 26px;font-weight:600;font-size:1.2rem;cursor:pointer;
+  background:var(--card);color:var(--ink);
+  border:3px solid var(--outline);border-bottom-width:8px;border-radius:18px;
+  transition:transform .08s ease,border-bottom-width .08s ease,filter .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:hover:not(:disabled){filter:brightness(1.05)}
+.btn:active:not(:disabled){transform:translateY(5px);border-bottom-width:3px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--blue);color:#fff}
+.btn.go{background:var(--mint);color:#fff}
+.btn.sun{background:var(--sun);color:var(--sun-ink)}
+.btn.coral{background:var(--coral);color:#fff}
+.btn.violet{background:var(--violet);color:#fff}
+.btn.orange{background:var(--orange);color:#fff}
+.btn.small{min-height:44px;padding:6px 16px;font-size:1rem;border-bottom-width:6px;border-radius:14px}
+.btn.big{min-height:76px;font-size:1.5rem;padding:14px 34px}
+.btn.nudge{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.08)}}
+
+/* ---------- Cabeceras ---------- */
+.hdr{display:flex;align-items:center;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.hdr h2{font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.1}
+.hdr .grow{flex:1}
+.chip{display:inline-block;padding:2px 14px;border-radius:999px;border:3px solid var(--outline);font-weight:600;font-size:.95rem;background:var(--card2)}
+.chip.blue{background:var(--blue);color:#fff}.chip.sun{background:var(--sun);color:var(--sun-ink)}.chip.violet{background:var(--violet);color:#fff}
+.chip.mint{background:var(--mint);color:#fff}.chip.coral{background:var(--coral);color:#fff}.chip.orange{background:var(--orange);color:#fff}
+
+/* ---------- Inicio ---------- */
+.splash{min-height:calc(100vh - 80px);display:grid;place-items:center;text-align:center}
+.splash-inner{display:grid;gap:22px;justify-items:center;max-width:560px}
+.splash .cody-big{width:min(240px,52vw);animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-12px) rotate(-2deg)}}
+.wordmark{display:flex;gap:8px;justify-content:center}
+.wordmark span{
+  width:clamp(48px,14vw,72px);height:clamp(56px,16vw,84px);display:grid;place-items:center;
+  font-weight:700;font-size:clamp(2rem,8vw,3.2rem);color:#fff;
+  border:3px solid var(--outline);border-bottom-width:9px;border-radius:14px;
+}
+.wordmark span:nth-child(1){background:var(--blue);transform:rotate(-4deg)}
+.wordmark span:nth-child(2){background:var(--sun);color:var(--sun-ink);transform:rotate(3deg)}
+.wordmark span:nth-child(3){background:var(--mint);transform:rotate(-2deg)}
+.wordmark span:nth-child(4){background:var(--coral);transform:rotate(4deg)}
+.wordmark span:nth-child(5){background:var(--violet);transform:rotate(-3deg)}
+.splash p.lead{font-size:1.25rem}
+.stack{display:grid;gap:14px;width:100%}
+.linkbtn{background:none;border:0;padding:8px;color:var(--ink2);text-decoration:underline;cursor:pointer;font-size:1rem}
+
+/* ---------- Formularios ---------- */
+.formcard{max-width:520px;margin:0 auto;background:var(--card);border:3px solid var(--outline);border-radius:22px;padding:24px;display:grid;gap:16px}
+.field{display:grid;gap:6px}
+.field label{font-weight:600}
+.field input{
+  min-height:56px;padding:10px 16px;border:3px solid var(--line);border-radius:14px;background:var(--paper);font-size:1.15rem;width:100%;
+}
+.field input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 4px rgba(47,107,255,.25)}
+.field .hint{font-size:.95rem;color:var(--ink2)}
+.pwrow{display:flex;gap:8px}
+.msg{padding:12px 16px;border-radius:14px;font-weight:500;border:3px solid var(--outline)}
+.msg.err{background:var(--bad-bg)}.msg.ok{background:var(--good-bg)}.msg.info{background:var(--warn-bg)}
+
+/* ---------- Menú ---------- */
+.greet{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+.greet .cody-mid{width:88px;flex:none}
+.greet h2{font-size:clamp(1.7rem,5vw,2.4rem);line-height:1.1}
+.mission{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px;padding:16px 20px;
+  background:var(--warn-bg);border:3px solid var(--outline);border-radius:20px;
+}
+.mission .txt{flex:1;min-width:200px}
+.mission small{display:block;color:var(--ink2);font-size:.95rem}
+.mission strong{font-size:1.25rem}
+.menu{display:grid;gap:16px;grid-template-columns:repeat(2,1fr)}
+@media(min-width:720px){.menu{grid-template-columns:repeat(3,1fr)}}
+.menu .btn{flex-direction:column;min-height:132px;font-size:1.3rem;gap:6px}
+.menu .btn .ico{font-size:2.4rem;line-height:1}
+.menu .btn.wide{grid-column:span 2}
+@media(min-width:720px){.menu .btn.wide{grid-column:span 1}}
+
+/* ---------- Tarjetas de juego / nivel ---------- */
+.games{display:grid;gap:18px}
+@media(min-width:760px){.games{grid-template-columns:repeat(3,1fr)}}
+.gcard{
+  text-align:left;display:grid;gap:8px;align-content:start;padding:18px;cursor:pointer;background:var(--card);
+  border:3px solid var(--outline);border-bottom-width:9px;border-radius:22px;position:relative;
+}
+.gcard:active{transform:translateY(4px);border-bottom-width:5px}
+.gcard .band{height:14px;border-radius:8px;border:3px solid var(--outline);margin:-6px 0 6px}
+.gcard h3{font-size:1.4rem}
+.gcard .reco{position:absolute;top:-14px;right:14px}
+.band.blue{background:var(--blue)}.band.sun{background:var(--sun)}.band.violet{background:var(--violet)}
+.dots{display:flex;gap:6px;margin-top:4px}
+.dots i{width:16px;height:16px;border-radius:50%;border:3px solid var(--outline);background:var(--card2)}
+.dots i.done{background:var(--mint)}.dots i.tried{background:var(--orange)}
+
+.levelgroup{margin-bottom:26px}
+.levelgroup h3{font-size:1.4rem;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.levels{display:grid;gap:14px}
+@media(min-width:700px){.levels{grid-template-columns:repeat(3,1fr)}}
+.lcard{
+  display:grid;gap:6px;text-align:left;padding:16px 18px;cursor:pointer;background:var(--card);
+  border:3px solid var(--outline);border-bottom-width:8px;border-radius:18px;position:relative;
+}
+.lcard:active{transform:translateY(4px);border-bottom-width:4px}
+.lcard .lt{font-weight:700;font-size:1.2rem}
+.stars{font-size:1.3rem;letter-spacing:2px}
+.stars .off{opacity:.25;filter:grayscale(1)}
+.lcard .reco{position:absolute;top:-14px;right:12px}
+.lcard.done{background:var(--good-bg)}
+
+/* ---------- Instrucciones ---------- */
+.instr{display:grid;gap:22px}
+@media(min-width:820px){.instr{grid-template-columns:1fr minmax(240px,340px);align-items:start}}
+.panel{background:var(--card);border:3px solid var(--outline);border-radius:22px;padding:20px;display:grid;gap:14px}
+.panel h3{font-size:1.3rem}
+.steps-preview{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.steps-preview li{display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:12px;background:var(--card2)}
+.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.fact{background:var(--card2);border-radius:14px;padding:10px 14px}
+.fact b{display:block;font-size:1.5rem;line-height:1.1}.fact span{font-size:.9rem;color:var(--ink2)}
+
+/* ---------- Juego: HUD ---------- */
+.hud{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;margin-bottom:14px}
+.hud-title{flex:1 1 240px;display:grid;gap:4px;justify-items:start}
+.hud-title strong{font-size:1.35rem;line-height:1.1}
+.stats{display:flex;gap:8px}
+.stat{min-width:74px;text-align:center;padding:6px 10px;background:var(--card);border:3px solid var(--outline);border-radius:14px}
+.stat b{display:block;font-size:1.35rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:.75rem;color:var(--ink2)}
+.hud-actions{display:flex;gap:8px}
+.say{display:flex;align-items:center;gap:12px;margin-bottom:16px;min-height:64px}
+.say-bot{width:54px;flex:none}
+.say p{position:relative;background:var(--card);border:3px solid var(--outline);border-radius:16px;padding:10px 16px;font-weight:500;flex:1}
+.say p::before{content:"";position:absolute;left:-11px;top:50%;width:16px;height:16px;background:var(--card);border-left:3px solid var(--outline);border-bottom:3px solid var(--outline);transform:translateY(-50%) rotate(45deg)}
+.say.bad p{background:var(--bad-bg)}.say.good p{background:var(--good-bg)}.say.hint p{background:var(--warn-bg)}
+.confirm{margin-bottom:16px;padding:14px 18px;border:3px solid var(--outline);border-radius:16px;background:var(--warn-bg);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.confirm p{flex:1;min-width:220px}
+
+/* ---------- Juego: tablero ---------- */
+.play{display:grid;gap:22px}
+@media(min-width:900px){.play{grid-template-columns:minmax(300px,460px) 1fr;align-items:start}}
+.board-wrap{display:flex;justify-content:center}
+.board{
+  position:relative;width:min(100%,460px);aspect-ratio:1;overflow:hidden;background:var(--card);
+  border:4px solid var(--outline);border-radius:22px;box-shadow:0 8px 0 var(--outline);
+  display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);
+}
+.board.mini{width:min(100%,300px);box-shadow:0 6px 0 var(--outline)}
+.cell{position:relative;display:grid;place-items:center;border:1px dashed var(--line)}
+.cell.alt{background:var(--card2)}
+.cell.start::after{content:"";position:absolute;inset:30%;border:3px dotted var(--ink2);border-radius:50%;opacity:.45}
+.sp{width:80%;height:80%;transition:opacity .3s,transform .3s}
+.sp.got{opacity:0;transform:scale(.2) rotate(120deg)}
+.cell.hit .sp{animation:wiggle .45s}
+.robot{
+  position:absolute;z-index:3;display:grid;place-items:center;pointer-events:none;
+  width:calc(100% / var(--n));height:calc(100% / var(--n));
+  left:calc(var(--c) * 100% / var(--n));top:calc(var(--r) * 100% / var(--n));
+  transition:left .32s ease,top .32s ease;
+}
+.robot svg{width:88%;height:88%}
+.robot.shake svg{animation:shake .4s}
+.robot.cheer svg{animation:cheer .6s 2}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+@keyframes wiggle{25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
+@keyframes cheer{50%{transform:translateY(-14px) scale(1.08)}}
+
+/* Cody */
+.rb-line{stroke:var(--outline);stroke-width:4;stroke-linecap:round;fill:none}
+.rb-ink{fill:var(--outline)}
+.rb-sun{fill:var(--sun);stroke:var(--outline);stroke-width:3.5}
+.rb-body{fill:var(--blue);stroke:var(--outline);stroke-width:4}
+.rb-body2{fill:var(--blue-d);stroke:var(--outline);stroke-width:3.5}
+.rb-screen{fill:#fff;stroke:var(--outline);stroke-width:3}
+.rb-eye{fill:#1B2140}
+.sp-star{fill:var(--sun);stroke:var(--outline);stroke-width:4;stroke-linejoin:round}
+.sp-rock{fill:#8C93AD;stroke:var(--outline);stroke-width:4;stroke-linejoin:round}
+.sp-rock2{fill:#B4BAD0}
+.sp-pole{fill:var(--outline)}
+.sp-flag{fill:var(--coral);stroke:var(--outline);stroke-width:4;stroke-linejoin:round}
+
+/* ---------- Programa y controles ---------- */
+.panel.prog{gap:16px}
+.prog h3{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.prog .count{font-size:1rem;font-weight:500;color:var(--ink2)}
+.tray{display:flex;flex-wrap:wrap;gap:8px;min-height:60px}
+.slot{
+  width:48px;height:56px;display:grid;place-items:center;border:3px dashed var(--line);border-radius:12px;
+  font-size:1.7rem;font-weight:700;color:transparent;position:relative;
+}
+.slot::before{content:attr(data-n);position:absolute;left:4px;top:1px;font-size:.62rem;font-weight:600;color:var(--ink2)}
+.slot.filled{border-style:solid;border-color:var(--outline);color:#fff}
+.slot.filled::before{color:rgba(255,255,255,.85)}
+.slot.d-U{background:var(--blue)}.slot.d-D{background:var(--violet)}.slot.d-L{background:var(--orange)}.slot.d-R{background:var(--mint)}
+.slot.on{outline:4px solid var(--sun);outline-offset:1px;transform:translateY(-5px)}
+.controls{display:flex;flex-wrap:wrap;gap:22px;align-items:center;justify-content:center}
+.dpad{display:grid;grid-template-columns:repeat(3,72px);grid-template-rows:repeat(3,72px);gap:8px}
+.key{
+  display:grid;place-items:center;font-size:2rem;font-weight:700;color:#fff;cursor:pointer;
+  border:3px solid var(--outline);border-bottom-width:8px;border-radius:18px;
+}
+.key:active:not(:disabled){transform:translateY(5px);border-bottom-width:3px}
+.key:disabled{opacity:.45;cursor:not-allowed}
+.key.U{grid-column:2;grid-row:1;background:var(--blue)}
+.key.L{grid-column:1;grid-row:2;background:var(--orange)}
+.key.R{grid-column:3;grid-row:2;background:var(--mint)}
+.key.D{grid-column:2;grid-row:3;background:var(--violet)}
+.actions{display:grid;gap:10px;flex:1 1 200px;max-width:280px}
+.kbd{font-size:.9rem;color:var(--ink2)}
+
+/* ---------- Ordena los pasos ---------- */
+.order{display:grid;gap:22px}
+@media(min-width:900px){.order{grid-template-columns:1fr 1fr;align-items:start}}
+.oslots{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.oslot{display:flex;align-items:center;gap:10px;min-height:64px;padding:6px 10px 6px 6px;border:3px dashed var(--line);border-radius:16px}
+.oslot .num{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--violet);color:#fff;font-weight:700;border:3px solid var(--outline)}
+.oslot .ph{color:var(--ink2)}
+.oslot.placed{border-style:solid;border-color:var(--outline);background:var(--card)}
+.oslot.okc{border-style:solid;border-color:var(--mint);background:var(--good-bg)}
+.oslot.badc{border-style:solid;border-color:var(--coral);background:var(--bad-bg);animation:shake .4s}
+.pool{display:flex;flex-wrap:wrap;gap:10px}
+.step-card{
+  display:flex;align-items:center;gap:10px;text-align:left;padding:8px 14px;min-height:56px;cursor:pointer;
+  background:var(--card);border:3px solid var(--outline);border-bottom-width:6px;border-radius:16px;font-size:1.05rem;font-weight:500;
+}
+.step-card:active{transform:translateY(3px);border-bottom-width:3px}
+.step-card .ic{font-size:1.7rem;line-height:1}
+.step-card.in-slot{flex:1;border-width:0;background:transparent;min-height:48px;padding:4px;border-radius:12px}
+
+/* ---------- Resultado ---------- */
+.result{display:grid;gap:20px}
+.rhead{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.rhead .cody-mid{width:120px;flex:none}
+.rhead h2{font-size:clamp(1.8rem,5vw,2.6rem);line-height:1.1}
+.tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.tile{background:var(--card);border:3px solid var(--outline);border-radius:16px;padding:12px 14px;text-align:center}
+.tile b{display:block;font-size:1.7rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile span{font-size:.9rem;color:var(--ink2)}
+.tile.pass{background:var(--good-bg)}.tile.fail{background:var(--bad-bg)}
+.tile.pass b,.tile.fail b{font-size:1.25rem;line-height:2.1rem}
+.feedback{font-size:1.2rem}
+.pipeline{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:.95rem}
+.pipeline .pstep{padding:4px 12px;border-radius:999px;border:3px solid var(--line);color:var(--ink2);transition:all .25s}
+.pipeline .pstep.on{border-color:var(--outline);background:var(--sun);color:var(--sun-ink);font-weight:600}
+.pipeline .pstep.done{border-color:var(--outline);background:var(--mint);color:#fff;font-weight:600}
+.next{display:grid;gap:8px;padding:18px 20px;border:3px solid var(--outline);border-radius:20px;background:var(--warn-bg)}
+.next strong{font-size:1.35rem}
+.svmbox{margin-top:6px;border-top:2px dashed var(--outline);padding-top:12px}
+.svmbox summary{cursor:pointer;font-weight:600;color:var(--violet-d)}
+.svmgauge{position:relative;height:14px;border-radius:999px;background:linear-gradient(90deg,var(--coral) 0%,var(--line) 48%,var(--line) 52%,var(--mint) 100%);border:3px solid var(--outline);margin:12px 0 30px}
+.svmline{position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;background:var(--outline)}
+.svmdot{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--outline);transform:translate(-50%,-50%)}
+.svmgauge .lo,.svmgauge .hi{position:absolute;top:20px;font-size:.78rem;color:var(--ink2)}
+.svmgauge .lo{left:0}.svmgauge .hi{right:0}
+.svmbars{display:grid;gap:6px;margin-top:6px}
+.svmbar-row{display:grid;grid-template-columns:130px 1fr;align-items:center;gap:8px;font-size:.85rem}
+.svmbar-track{height:10px;border-radius:6px;background:var(--card2);overflow:hidden}
+.svmbar-fill{height:100%;border-radius:6px}
+.svmbar-fill.pos{background:var(--mint)}
+.svmbar-fill.neg{background:var(--coral)}
+code{background:var(--card2);padding:1px 6px;border-radius:6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
+.rbtns{display:flex;flex-wrap:wrap;gap:12px}
+
+/* ---------- Tablas / progreso / docente ---------- */
+.tablewrap{overflow-x:auto;background:var(--card);border:3px solid var(--outline);border-radius:18px}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:1rem}
+th,td{padding:10px 14px;text-align:left;border-bottom:2px solid var(--line);white-space:nowrap}
+th{background:var(--card2);font-weight:600}
+tr:last-child td{border-bottom:0}
+.badge{display:inline-block;padding:1px 12px;border-radius:999px;border:2px solid var(--outline);font-weight:600;font-size:.9rem}
+.badge.ok{background:var(--good-bg)}.badge.no{background:var(--bad-bg)}.badge.inc{background:var(--warn-bg)}
+.empty{text-align:center;padding:36px 18px;display:grid;gap:14px;justify-items:center}
+.empty .cody-mid{width:110px}
+.bar{height:22px;border:3px solid var(--outline);border-radius:999px;background:var(--card);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--mint);transition:width .5s}
+.track{display:grid;gap:12px;margin-bottom:14px}
+.track .row{display:flex;align-items:center;gap:0;flex-wrap:nowrap}
+.node{flex:none;width:92px;text-align:center;display:grid;gap:2px;justify-items:center}
+.node .dot{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:1.3rem;border:3px solid var(--outline);background:var(--card2)}
+.node.done .dot{background:var(--mint);color:#fff}
+.node.tried .dot{background:var(--warn-bg);border-color:var(--orange)}
+.node small{font-size:.8rem;color:var(--ink2)}
+.link{flex:1;height:6px;background:var(--line);border-radius:3px;min-width:14px}
+.link.done{background:var(--mint)}
+.pgrid{display:grid;gap:16px}
+@media(min-width:800px){.pgrid{grid-template-columns:1fr 1fr}}
+svg.spark{width:100%;height:auto;display:block}
+.spark .ln{fill:none;stroke:var(--blue);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.spark .pass{stroke:var(--mint);stroke-dasharray:5 5;stroke-width:2}
+.spark text{fill:var(--ink2);font-size:11px;font-family:inherit}
+textarea.csv{width:100%;min-height:160px;padding:12px;border:3px solid var(--line);border-radius:14px;background:var(--paper);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.helpgrid{display:grid;gap:16px}
+@media(min-width:800px){.helpgrid{grid-template-columns:repeat(3,1fr)}}
+.help li{margin:6px 0}
+ul.plain{margin:0;padding-left:20px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+@media(max-width:520px){
+  body{font-size:17px}
+  .dpad{grid-template-columns:repeat(3,64px);grid-template-rows:repeat(3,64px)}
+  .stat{min-width:60px;padding:4px 6px}
+  .node{width:78px}
+}
+</style>
+</head>
+<body>
+
+<!-- Sprites reutilizables -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="sp-star" viewBox="0 0 100 100"><polygon class="sp-star" points="50,8 61,36 92,38 68,58 76,88 50,72 24,88 32,58 8,38 39,36"/></symbol>
+  <symbol id="sp-rock" viewBox="0 0 100 100"><path class="sp-rock" d="M16 80 L12 54 L28 30 L54 22 L80 36 L90 64 L74 84 Z"/><path class="sp-rock2" d="M30 40 L52 32 L66 42 L48 50 Z"/></symbol>
+  <symbol id="sp-flag" viewBox="0 0 100 100"><ellipse cx="34" cy="88" rx="18" ry="6" class="sp-pole"/><rect x="30" y="12" width="7" height="76" rx="3" class="sp-pole"/><path class="sp-flag" d="M37 14 L84 30 L37 48 Z"/></symbol>
+</svg>
+
+<main>
+  <section class="screen" id="scr-splash" hidden></section>
+  <section class="screen" id="scr-register" hidden></section>
+  <section class="screen" id="scr-login" hidden></section>
+  <section class="screen" id="scr-menu" hidden></section>
+  <section class="screen" id="scr-games" hidden></section>
+  <section class="screen" id="scr-levels" hidden></section>
+  <section class="screen" id="scr-instr" hidden></section>
+  <section class="screen" id="scr-play" hidden></section>
+  <section class="screen" id="scr-result" hidden></section>
+  <section class="screen" id="scr-history" hidden></section>
+  <section class="screen" id="scr-progress" hidden></section>
+  <section class="screen" id="scr-help" hidden></section>
+  <section class="screen" id="scr-teacher" hidden></section>
+</main>
+
+<script>
+"use strict";
+/* =====================================================================
+   CGAME · cliente HTML5
+   Datos compartidos (shared/levels.json) y modelo SVM (backend/data/svm_model.json)
+   se inyectan con tools/build_client.py.
+   ===================================================================== */
+const DATA = {"version": 1, "legend": "R = inicio del robot, G = meta, # = roca, * = estrella, . = casilla libre", "games": [{"id": "G1", "name": "Ruta del Robot", "type": "grid", "area": "Secuencias", "color": "blue", "description": "Dale instrucciones a Cody para que llegue a la bandera.", "objective": "Ordenar instrucciones paso a paso para resolver un recorrido."}, {"id": "G2", "name": "Estrellas en Camino", "type": "grid", "area": "Planificación", "color": "sun", "description": "Cody debe recoger todas las estrellas y después llegar a la bandera.", "objective": "Planificar una secuencia que cumple varias metas."}, {"id": "G3", "name": "Ordena los Pasos", "type": "order", "area": "Orden lógico", "color": "violet", "description": "Pon las tarjetas en el orden correcto, como en una receta.", "objective": "Reconocer el orden lógico de una secuencia de acciones."}], "levels": [{"id": "G1-L1", "game_id": "G1", "number": 1, "difficulty": "Básico", "title": "Primer recorrido", "instructions": "Toca las flechas para armar el programa de Cody. Luego pulsa Ejecutar y mira si llega a la bandera.", "par_time": 40, "max_slots": 9, "grid": ["R...", ".#..", "...G", "...."]}, {"id": "G1-L2", "game_id": "G1", "number": 2, "difficulty": "Intermedio", "title": "Camino de rocas", "instructions": "Hay más rocas en el camino. Piensa el recorrido completo antes de poner las flechas.", "par_time": 75, "max_slots": 11, "grid": ["R..#.", ".#...", "...#.", ".#...", "...#G"]}, {"id": "G1-L3", "game_id": "G1", "number": 3, "difficulty": "Avanzado", "title": "El laberinto", "instructions": "Ahora tienes pocas casillas para tu programa. Busca el camino más corto.", "par_time": 120, "max_slots": 14, "grid": ["R.#...", ".##..#", "..#...", ".#....", "...#..", "#..#.G"]}, {"id": "G2-L1", "game_id": "G2", "number": 1, "difficulty": "Básico", "title": "Una estrella", "instructions": "Recoge la estrella y luego llega a la bandera. Las estrellas se recogen al pasar por ellas.", "par_time": 50, "max_slots": 10, "grid": ["R...", ".*..", "....", "...G"]}, {"id": "G2-L2", "game_id": "G2", "number": 2, "difficulty": "Intermedio", "title": "Dos estrellas", "instructions": "Hay dos estrellas. Planea en qué orden las vas a recoger antes de llegar a la bandera.", "par_time": 90, "max_slots": 13, "grid": ["R....", ".#.#.", ".....", "*#..#", "..#*G"]}, {"id": "G2-L3", "game_id": "G2", "number": 3, "difficulty": "Avanzado", "title": "Tres estrellas", "instructions": "Tres estrellas y pocas casillas. Escoge un recorrido corto que pase por todas.", "par_time": 150, "max_slots": 18, "grid": ["R...*.", "#....#", "..##..", ".*..#.", ".*...#", "..##.G"]}, {"id": "G3-L1", "game_id": "G3", "number": 1, "difficulty": "Básico", "title": "Lavarse las manos", "instructions": "Toca las tarjetas en el orden correcto para lavarte las manos. Luego pulsa Comprobar.", "par_time": 30, "max_slots": 4, "steps": [{"icon": "🚰", "text": "Abre la llave y moja tus manos"}, {"icon": "🧼", "text": "Ponte jabón y frota"}, {"icon": "💦", "text": "Enjuágate con agua"}, {"icon": "🧻", "text": "Sécate con la toalla"}]}, {"id": "G3-L2", "game_id": "G3", "number": 2, "difficulty": "Intermedio", "title": "Preparar jugo de naranja", "instructions": "Ordena los pasos para preparar un jugo de naranja. Piensa qué se hace primero.", "par_time": 45, "max_slots": 5, "steps": [{"icon": "🍊", "text": "Lava las naranjas"}, {"icon": "🔪", "text": "Corta las naranjas por la mitad"}, {"icon": "🤲", "text": "Exprime las naranjas"}, {"icon": "🥛", "text": "Sirve el jugo en un vaso"}, {"icon": "😋", "text": "Toma tu jugo"}]}, {"id": "G3-L3", "game_id": "G3", "number": 3, "difficulty": "Avanzado", "title": "Sembrar una planta", "instructions": "Ordena los seis pasos para sembrar una planta. Cada paso depende del anterior.", "par_time": 60, "max_slots": 6, "steps": [{"icon": "🪴", "text": "Llena la maceta con tierra"}, {"icon": "👆", "text": "Haz un huequito con el dedo"}, {"icon": "🌰", "text": "Pon la semilla"}, {"icon": "🤏", "text": "Tápala con tierra"}, {"icon": "💧", "text": "Échale agua"}, {"icon": "🌻", "text": "Mira cómo crece tu planta"}]}]};
+const MODEL = {"features": ["accuracy", "efficiency", "speed", "errors", "hints", "level"], "mean": [0.6514249999999995, 0.6274236272397913, 0.5976876195980629, 0.5734444444444438, 0.5009259259259258, 0.6653703703703691], "std": [0.21087278270585633, 0.2325316210680148, 0.24912508735053582, 0.3397471645245472, 0.34720987632372413, 0.2725024382921581], "w": [0.9698868203725074, 0.7504512427358723, 0.7422871496632931, -0.4109460967842061, -0.18706946849336645, -0.6277989136593085], "b": 0.19830046444735572, "meta": {"kernel": "linear", "C": 0.1, "target": 0.92, "target_met": true, "test_precision": 0.9339, "test_recall": 0.928, "test_accuracy": 0.9278, "samples": 4500, "iterations": 3, "trained_on": "casos simulados (ver recommender/simulate.py)"}};
+
+/* ---------- Utilidades ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reduceMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const stepMs = () => reduceMotion() ? 90 : 380;
+const mmss = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+const roundHalfUp = x => Math.floor(x + 0.5);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const shortDate = iso => new Date(iso).toLocaleDateString('es', {day: '2-digit', month: '2-digit', year: 'numeric'});
+
+/* ---------- Almacenamiento local (con respaldo en memoria) ---------- */
+const Store = (() => {
+  const mem = {};
+  return {
+    get(k, def) {
+      try { const v = localStorage.getItem(k); if (v !== null) return JSON.parse(v); } catch (e) {}
+      return k in mem ? mem[k] : def;
+    },
+    set(k, v) {
+      mem[k] = v;
+      try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {}
+    },
+    del(k) { delete mem[k]; try { localStorage.removeItem(k); } catch (e) {} }
+  };
+})();
+
+/* ---------- Juegos y niveles ---------- */
+const DIRS = {U: [-1, 0], D: [1, 0], L: [0, -1], R: [0, 1]};
+const ARROW = {U: '↑', D: '↓', L: '←', R: '→'};
+const DIRNAME = {U: 'arriba', D: 'abajo', L: 'a la izquierda', R: 'a la derecha'};
+
+function parseGrid(rows) {
+  const g = {n: rows.length, start: null, goal: null, rocks: new Set(), stars: []};
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === 'R') g.start = [r, c];
+    else if (ch === 'G') g.goal = [r, c];
+    else if (ch === '#') g.rocks.add(r + ',' + c);
+    else if (ch === '*') g.stars.push([r, c]);
+  }));
+  return g;
+}
+const starIndex = (g, r, c) => g.stars.findIndex(s => s[0] === r && s[1] === c);
+
+/* Camino mínimo (BFS): devuelve la lista de direcciones o null si no hay solución */
+function solveGrid(g) {
+  const full = (1 << g.stars.length) - 1;
+  const key = (r, c, m) => r + ',' + c + ',' + m;
+  const q = [[g.start[0], g.start[1], 0]];
+  const par = new Map([[key(g.start[0], g.start[1], 0), null]]);
+  for (let h = 0; h < q.length; h++) {
+    const [r, c, m] = q[h];
+    if (r === g.goal[0] && c === g.goal[1] && m === full) {
+      const path = []; let k = key(r, c, m);
+      while (par.get(k)) { const p = par.get(k); path.push(p.d); k = p.k; }
+      return path.reverse();
+    }
+    for (const d of 'UDLR') {
+      const nr = r + DIRS[d][0], nc = c + DIRS[d][1];
+      if (nr < 0 || nc < 0 || nr >= g.n || nc >= g.n || g.rocks.has(nr + ',' + nc)) continue;
+      let nm = m; const si = starIndex(g, nr, nc); if (si >= 0) nm |= 1 << si;
+      const nk = key(nr, nc, nm);
+      if (!par.has(nk)) { par.set(nk, {k: key(r, c, m), d}); q.push([nr, nc, nm]); }
+    }
+  }
+  return null;
+}
+
+const GAMES = DATA.games;
+const LEVELS = DATA.levels.map(lv => {
+  const o = {...lv};
+  if (lv.grid) {
+    o.g = parseGrid(lv.grid);
+    o.path = solveGrid(o.g);
+    if (!o.path) throw new Error('Nivel sin solución: ' + lv.id);
+    o.optimal = o.path.length;
+  } else {
+    o.optimal = lv.steps.length;
+  }
+  return o;
+});
+const levelById = id => LEVELS.find(l => l.id === id);
+const gameById = id => GAMES.find(g => g.id === id);
+const levelsOf = gid => LEVELS.filter(l => l.game_id === gid);
+const neighborLevel = (id, off) => {
+  const lv = levelById(id);
+  const n = LEVELS.find(l => l.game_id === lv.game_id && l.number === lv.number + off);
+  return n ? n.id : null;
+};
+
+/* Ejecuta un programa lineal de instrucciones sobre el mapa */
+function runProgram(g, program) {
+  let pos = [...g.start]; const got = new Set(); const steps = [];
+  for (let i = 0; i < program.length; i++) {
+    const nr = pos[0] + DIRS[program[i]][0], nc = pos[1] + DIRS[program[i]][1];
+    if (nr < 0 || nc < 0 || nr >= g.n || nc >= g.n)
+      return {steps: [...steps, {i, bump: 'wall', pos: [...pos]}], bumpAt: i, success: false, finalPos: pos, got};
+    if (g.rocks.has(nr + ',' + nc))
+      return {steps: [...steps, {i, bump: 'rock', pos: [...pos], rock: [nr, nc]}], bumpAt: i, success: false, finalPos: pos, got};
+    pos = [nr, nc];
+    const si = starIndex(g, nr, nc); let star = -1;
+    if (si >= 0 && !got.has(si)) { got.add(si); star = si; }
+    steps.push({i, pos: [...pos], star});
+  }
+  const success = pos[0] === g.goal[0] && pos[1] === g.goal[1] && got.size === g.stars.length;
+  return {steps, bumpAt: -1, success, finalPos: pos, got};
+}
+
+/* ---------- Evaluación (debe coincidir con backend/recommender/scoring.py) ---------- */
+const PASS_SCORE = 60, HINT_PENALTY = 5;
+function computeResult(level, hits, misses, movements, time, hints, completed = true) {
+  const total = hits + misses;
+  const accFrac = total ? hits / total : 0;
+  const efficiency = Math.min(1, level.optimal / Math.max(movements, 1));
+  const speed = Math.min(1, level.par_time / Math.max(time, 1));
+  const raw = 100 * (0.5 * accFrac + 0.3 * efficiency + 0.2 * speed);
+  const score = Math.max(0, Math.min(100, roundHalfUp(raw) - HINT_PENALTY * hints));
+  return {accuracy: roundHalfUp(accFrac * 100), efficiency, speed, score, approved: !!(completed && score >= PASS_SCORE)};
+}
+
+/* ---------- SVM: variables, decisión y recomendación (espejo de backend/recommender) ---------- */
+const clip01 = x => Math.max(0, Math.min(1, x));
+function buildFeatures(lv, accuracy, movements, time, errors, hints) {
+  return [clip01(accuracy / 100), clip01(lv.optimal / Math.max(movements, 1)), clip01(lv.par_time / Math.max(time, 1)),
+          clip01(errors / 5), clip01(hints / 3), lv.number / 3];
+}
+const featuresOf = r => buildFeatures(levelById(r.level_id), r.accuracy, r.movements, r.time, r.errors, r.hints_used);
+function svmDecision(f) {
+  let s = MODEL.b;
+  for (let i = 0; i < f.length; i++) s += MODEL.w[i] * (f[i] - MODEL.mean[i]) / MODEL.std[i];
+  return s;
+}
+const isApproved = r => !!(r.completed && r.score >= PASS_SCORE);
+const FEATURE_LABEL = {accuracy: 'Aciertos', efficiency: 'Eficiencia de pasos', speed: 'Rapidez', errors: 'Pocos errores', hints: 'Pocas ayudas', level: 'Dificultad del nivel'};
+function svmBreakdown(f) {
+  const rows = MODEL.features.map((name, i) => ({
+    name, label: FEATURE_LABEL[name] || name,
+    contribution: MODEL.w[i] * (f[i] - MODEL.mean[i]) / MODEL.std[i]
+  }));
+  rows.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
+  return {rows, bias: MODEL.b, total: MODEL.b + rows.reduce((s, r) => s + r.contribution, 0)};
+}
+const REASONS = {
+  accuracy: 'Tuviste varios errores. Practica revisando cada paso.',
+  efficiency: 'Usaste más pasos de los necesarios. Busca una forma más corta.',
+  speed: 'Puedes practicar para resolverlo más rápido.',
+  errors: 'Necesitaste varios intentos. Piensa todo el camino antes de comprobar.',
+  hints: 'Necesitaste varias pistas. Intenta resolverlo con tus propias ideas.',
+  generic: 'Practica un poco más para dominar este nivel.'
+};
+function weakestArea(f) {
+  const s = {accuracy: f[0], efficiency: f[1], speed: f[2], errors: 1 - f[3], hints: 1 - f[4]};
+  let key = 'accuracy';
+  for (const k in s) if (s[k] < s[key]) key = k;
+  return s[key] < 0.75 ? key : 'generic';
+}
+function recommendLocal(attempts) {
+  const done = attempts.filter(a => a.completed);
+  if (!done.length) return null;
+  const latest = done[done.length - 1];
+  const fLatest = featuresOf(latest);
+  const dLast = svmDecision(fLatest);
+  const same = done.filter(a => a.level_id === latest.level_id);
+  const prev = same.slice(0, -1).slice(-2);
+  const decision = prev.length
+    ? 0.6 * dLast + 0.4 * (prev.reduce((s, p) => s + svmDecision(featuresOf(p)), 0) / prev.length)
+    : dLast;
+  const learned = isApproved(latest) && decision >= 0;
+  const level = levelById(latest.level_id), game = gameById(level.game_id);
+  const base = {decision, prediction: learned ? 'aprendio' : 'refuerzo', area: game.area, game_id: game.id};
+  if (learned) {
+    const nxt = neighborLevel(latest.level_id, +1);
+    if (nxt) return {...base, level_id: nxt, action: 'advance', reason: '¡Lo dominaste! Estás listo para el siguiente reto.'};
+    const passed = new Set(done.filter(isApproved).map(a => a.level_id));
+    const pending = LEVELS.find(l => !passed.has(l.id));
+    if (pending) return {...base, level_id: pending.id, action: 'advance',
+      reason: `¡Dominaste ${game.name}! Ahora prueba ${gameById(pending.game_id).name}.`};
+    const best = {}; done.forEach(a => best[a.level_id] = Math.max(best[a.level_id] || 0, a.score));
+    let weakest = LEVELS[0].id;
+    for (const l of LEVELS) if ((best[l.id] || 0) < (best[weakest] || 0)) weakest = l.id;
+    return {...base, level_id: weakest, action: 'review', reason: '¡Completaste todas las misiones! Repite la que quieras mejorar.'};
+  }
+  let streak = 0;
+  for (const a of [...same].reverse()) {
+    if (isApproved(a) && svmDecision(featuresOf(a)) >= 0) break;
+    streak++;
+  }
+  const reason = REASONS[weakestArea(fLatest)];
+  const back = neighborLevel(latest.level_id, -1);
+  if (streak >= 2 && back) return {...base, level_id: back, action: 'step_back', reason: 'Vamos a practicar un nivel más fácil. ' + reason};
+  return {...base, level_id: latest.level_id, action: 'reinforce', reason};
+}
+
+/* ---------- Pistas contextuales (no resuelven todo el ejercicio) ---------- */
+function relWords(from, to) {
+  const v = to[0] > from[0] ? 'abajo' : to[0] < from[0] ? 'arriba' : '';
+  const h = to[1] > from[1] ? 'a la derecha' : to[1] < from[1] ? 'a la izquierda' : '';
+  return v && h ? `${v} y ${h}` : (v || h || 'aquí mismo');
+}
+function nextTarget(g, from, got) {
+  const pending = g.stars.filter((s, i) => !got.has(i));
+  if (!pending.length) return {pt: g.goal, what: 'la bandera'};
+  pending.sort((a, b) => (Math.abs(a[0] - from[0]) + Math.abs(a[1] - from[1])) - (Math.abs(b[0] - from[0]) + Math.abs(b[1] - from[1])));
+  return {pt: pending[0], what: 'la estrella más cercana'};
+}
+function gridHint(level, lastRun, n) {
+  const g = level.g;
+  if (n === 1) {
+    if (lastRun && lastRun.bumpAt >= 0)
+      return `Cody chocó en la instrucción número ${lastRun.bumpAt + 1}. Revisa ese paso y los anteriores.`;
+    if (lastRun && !lastRun.success) {
+      if (g.stars.length && lastRun.got.size < g.stars.length) return 'Todavía falta recoger una estrella. Mira cuál no pisó Cody.';
+      return `Cody terminó lejos de la bandera. Desde donde quedó, la bandera está ${relWords(lastRun.finalPos, g.goal)}.`;
+    }
+    const t = nextTarget(g, g.start, new Set());
+    return `Mira el mapa: ${t.what} está ${relWords(g.start, t.pt)} de Cody. Cuidado con las rocas.`;
+  }
+  const k = Math.min(n - 1, level.path.length - 1);
+  return `Cody puede empezar así: ${level.path.slice(0, k).map(d => ARROW[d]).join(' ')}. ¡Tú sigues desde ahí!`;
+}
+function orderHint(level, slots, n) {
+  const total = level.steps.length;
+  if (n === 1) {
+    const w = slots.findIndex((c, i) => c !== null && c !== i);
+    return w >= 0 ? `Mira la tarjeta del lugar ${w + 1}: parece que no va ahí.` : 'Piensa: ¿qué se hace primero? Empieza por el principio.';
+  }
+  const k = Math.min(n - 1, total - 1);
+  return 'Los primeros pasos son: ' + level.steps.slice(0, k).map((s, i) => `${i + 1}) ${s.text}`).join(' · ') + '.';
+}
+
+/* ---------- Mascota y sprites ---------- */
+function robotSVG(mood = 'happy') {
+  const mouth = mood === 'hmm' ? '<circle cx="50" cy="53" r="3.6" class="rb-ink"/>' : '<path d="M41 51 Q50 60 59 51" class="rb-line"/>';
+  return `<svg viewBox="0 0 100 100" class="cody" aria-hidden="true">
+    <line x1="50" y1="19" x2="50" y2="10" class="rb-line"/><circle cx="50" cy="8" r="5.5" class="rb-sun"/>
+    <rect x="7" y="38" width="11" height="18" rx="4.5" class="rb-sun"/><rect x="82" y="38" width="11" height="18" rx="4.5" class="rb-sun"/>
+    <rect x="17" y="19" width="66" height="54" rx="17" class="rb-body"/>
+    <rect x="26" y="29" width="48" height="32" rx="11" class="rb-screen"/>
+    <circle cx="39" cy="42" r="5" class="rb-eye"/><circle cx="61" cy="42" r="5" class="rb-eye"/>
+    ${mouth}
+    <rect x="29" y="75" width="42" height="13" rx="6.5" class="rb-body2"/>
+    <circle cx="37" cy="91" r="6.5" class="rb-ink"/><circle cx="63" cy="91" r="6.5" class="rb-ink"/></svg>`;
+}
+const spr = (name, cls = '') => `<svg class="sp ${cls}" viewBox="0 0 100 100" aria-hidden="true"><use href="#sp-${name}"/></svg>`;
+
+/* ---------- Sonido opcional ---------- */
+let actx = null;
+function sfx(kind) {
+  if (!state.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const seq = {tap: [[660, .05]], ok: [[523, .09], [659, .09], [784, .14]], bad: [[240, .15], [190, .2]],
+                 win: [[523, .1], [659, .1], [784, .1], [1046, .3]]}[kind];
+    let t = actx.currentTime;
+    for (const [f, d] of seq) {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'triangle'; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.16, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + .02); t += d;
+    }
+  } catch (e) {}
+}
+
+/* =====================================================================
+   Backend: la misma interfaz asíncrona en modo local (navegador) y remoto (Django)
+   ===================================================================== */
+class ApiError extends Error { constructor(code) { super(code); this.code = code; } }
+const pubUser = u => ({id: u.id, name: u.name, email: u.email, created_at: u.created_at});
+
+async function hashPw(pw, salt) {
+  try {
+    if (window.crypto && crypto.subtle) {
+      const enc = new TextEncoder();
+      const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+      const bits = await crypto.subtle.deriveBits({name: 'PBKDF2', salt: enc.encode(salt), iterations: 100000, hash: 'SHA-256'}, key, 256);
+      return [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+  } catch (e) {}
+  let h = 2166136261; const s = salt + pw;            // respaldo sencillo si no hay crypto.subtle
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return 'fnv:' + (h >>> 0).toString(16);
+}
+
+const LocalBackend = {
+  mode: 'local',
+  async register({name, email, password}) {
+    email = email.trim().toLowerCase();
+    const users = Store.get('cgame:users', []);
+    if (users.some(u => u.email === email)) throw new ApiError('email_taken');
+    const salt = uid() + uid();
+    const user = {id: 'U-' + uid(), name: name.trim(), email, salt, hash: await hashPw(password, salt), created_at: new Date().toISOString()};
+    users.push(user); Store.set('cgame:users', users);
+    return pubUser(user);
+  },
+  async login({email, password}) {
+    email = email.trim().toLowerCase();
+    const u = Store.get('cgame:users', []).find(x => x.email === email);
+    if (!u || u.hash !== await hashPw(password, u.salt)) throw new ApiError('bad_credentials');
+    Store.set('cgame:session', u.id);
+    return pubUser(u);
+  },
+  async restore() {
+    const id = Store.get('cgame:session', null);
+    const u = id && Store.get('cgame:users', []).find(x => x.id === id);
+    return u ? pubUser(u) : null;
+  },
+  async logout() { Store.del('cgame:session'); },
+  async listAttempts(user) { return Store.get('cgame:attempts', []).filter(a => a.user_id === user.id); },
+  async saveAttempt(user, rec) {
+    const all = Store.get('cgame:attempts', []); all.push(rec); Store.set('cgame:attempts', all);
+    if (!rec.completed) return {attempt: rec, recommendation: null};
+    const reco = recommendLocal(all.filter(a => a.user_id === user.id));
+    const recos = Store.get('cgame:recos', []);
+    recos.push({user_id: user.id, attempt_id: rec.attempt_id, level_recommended: reco.level_id, reason: reco.reason, date: new Date().toISOString(), ...reco});
+    Store.set('cgame:recos', recos);
+    return {attempt: rec, recommendation: reco};
+  },
+  async latestRecommendation(user) {
+    const mine = Store.get('cgame:recos', []).filter(r => r.user_id === user.id);
+    if (!mine.length) return null;
+    const r = mine[mine.length - 1];
+    return {level_id: r.level_id, reason: r.reason, action: r.action, prediction: r.prediction, area: r.area, game_id: r.game_id, decision: r.decision};
+  },
+  async wipe() { ['cgame:users', 'cgame:attempts', 'cgame:recos', 'cgame:session'].forEach(Store.del); }
+};
+
+/* Modo remoto: el juego habla con el backend Django (/api/...) usando ?api=http://localhost:8000/api */
+function makeRemoteBackend(base) {
+  const tokenKey = 'cgame:token';
+  async function call(path, opts = {}) {
+    const token = Store.get(tokenKey, null);
+    const res = await fetch(base + path, {
+      method: opts.method || 'GET',
+      headers: {'Content-Type': 'application/json', ...(token ? {Authorization: 'Bearer ' + token} : {})},
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    let data = {}; try { data = await res.json(); } catch (e) {}
+    if (!res.ok) throw new ApiError(data.error || 'server_error');
+    return data;
+  }
+  return {
+    mode: 'remote',
+    async register(p) { return (await call('/register', {method: 'POST', body: p})).user; },
+    async login(p) { const d = await call('/login', {method: 'POST', body: p}); Store.set(tokenKey, d.token); return d.user; },
+    async restore() { if (!Store.get(tokenKey, null)) return null; try { return (await call('/me')).user; } catch (e) { return null; } },
+    async logout() { Store.del(tokenKey); },
+    async listAttempts() { return (await call('/attempts')).attempts; },
+    async saveAttempt(user, rec) { return call('/attempts', {method: 'POST', body: rec}); },
+    async latestRecommendation() { return (await call('/recommendation')).recommendation; },
+    async wipe() {}
+  };
+}
+const API_BASE = new URLSearchParams(location.search).get('api');
+const backend = API_BASE ? makeRemoteBackend(API_BASE.replace(/\/$/, '')) : LocalBackend;
+
+/* =====================================================================
+   Estado y navegación
+   ===================================================================== */
+const state = {user: null, attempts: [], reco: null, play: null, sound: Store.get('cgame:sound', false), levelsGame: null, currentLevel: null};
+const SCREENS = ['splash', 'register', 'login', 'menu', 'games', 'levels', 'instr', 'play', 'result', 'history', 'progress', 'help', 'teacher'];
+const views = {};
+
+function go(name, arg) {
+  if (state.play && name !== 'play' && name !== 'result') stopPlayTimers();
+  SCREENS.forEach(s => { $('#scr-' + s).hidden = s !== name; });
+  views[name](arg);
+  window.scrollTo(0, 0);
+  const h = $('#scr-' + name).querySelector('h1,h2');
+  if (h) { h.setAttribute('tabindex', '-1'); h.focus({preventScroll: true}); }
+}
+
+const statsByLevel = () => {
+  const m = {};
+  state.attempts.forEach(a => {
+    const s = m[a.level_id] || (m[a.level_id] = {tries: 0, done: 0, best: 0, passed: false});
+    s.tries++;
+    if (a.completed) { s.done++; s.best = Math.max(s.best, a.score); if (isApproved(a)) s.passed = true; }
+  });
+  return m;
+};
+const starsFor = best => best >= 90 ? 3 : best >= 75 ? 2 : best >= PASS_SCORE ? 1 : 0;
+const starsHTML = n => `<span class="stars" aria-label="${n} de 3 estrellas">${[0, 1, 2].map(i => `<span class="${i < n ? '' : 'off'}">⭐</span>`).join('')}</span>`;
+const suggested = () => state.reco ? state.reco : {level_id: 'G1-L1', reason: '¡Empieza tu primera misión!', action: 'advance'};
+const backBtn = (to, label = '← Volver') => `<button class="btn small" data-act="go" data-to="${to}">${label}</button>`;
+const soundLabel = () => state.sound ? '🔊 Sonido' : '🔈 Sin sonido';
+
+/* ---------- Inicio ---------- */
+views.splash = () => {
+  $('#scr-splash').innerHTML = `
+    <div class="splash"><div class="splash-inner">
+      <div class="cody-big">${robotSVG()}</div>
+      <h1 class="wordmark" aria-label="CGAME"><span>C</span><span>G</span><span>A</span><span>M</span><span>E</span></h1>
+      <p class="lead">Dale instrucciones a Cody, el robot, y resuelve retos de pensamiento computacional.</p>
+      <div class="stack">
+        <button class="btn primary big" data-act="go" data-to="register">Crear mi cuenta</button>
+        <button class="btn big" data-act="go" data-to="login">Ya tengo cuenta</button>
+        <button class="linkbtn" data-act="demo">Probar con un estudiante de ejemplo</button>
+      </div>
+    </div></div>`;
+};
+
+/* ---------- Registro ---------- */
+views.register = () => {
+  $('#scr-register').innerHTML = `
+    <div class="hdr">${backBtn('splash')}<h2>Crea tu cuenta</h2></div>
+    <form class="formcard" id="f-register" novalidate>
+      <div class="field"><label for="r-name">¿Cómo te llamas?</label><input id="r-name" autocomplete="given-name" maxlength="30" placeholder="Tu nombre"></div>
+      <div class="field"><label for="r-email">Correo electrónico</label><input id="r-email" type="email" autocomplete="email" placeholder="nombre@correo.com"><span class="hint">Puede ser el de tu familia.</span></div>
+      <div class="field"><label for="r-pass">Contraseña</label>
+        <div class="pwrow"><input id="r-pass" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres"><button type="button" class="btn small" data-act="showpw" data-target="r-pass">Ver</button></div></div>
+      <div id="r-msg" role="alert"></div>
+      <button class="btn go big" type="submit">Crear cuenta</button>
+    </form>`;
+  $('#f-register').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = $('#r-name').value.trim(), email = $('#r-email').value.trim(), password = $('#r-pass').value;
+    const box = $('#r-msg');
+    if (!name) return box.innerHTML = '<div class="msg err">Escribe tu nombre para continuar.</div>';
+    if (!/^\S+@\S+\.\S+$/.test(email)) return box.innerHTML = '<div class="msg err">Escribe un correo válido, por ejemplo nombre@correo.com.</div>';
+    if (password.length < 6) return box.innerHTML = '<div class="msg err">La contraseña necesita al menos 6 caracteres.</div>';
+    try {
+      await backend.register({name, email, password});
+      go('login', {email, created: true});
+    } catch (err) {
+      box.innerHTML = err.code === 'email_taken'
+        ? '<div class="msg err">Ese correo ya tiene una cuenta. Prueba con “Ya tengo cuenta”.</div>'
+        : '<div class="msg err">No pudimos crear la cuenta. Inténtalo de nuevo.</div>';
+    }
+  });
+};
+
+/* ---------- Inicio de sesión ---------- */
+views.login = (arg = {}) => {
+  $('#scr-login').innerHTML = `
+    <div class="hdr">${backBtn('splash')}<h2>Inicia sesión</h2></div>
+    <form class="formcard" id="f-login" novalidate>
+      ${arg.created ? '<div class="msg ok">¡Cuenta creada! Ahora entra con tu correo y tu contraseña.</div>' : ''}
+      <div class="field"><label for="l-email">Correo electrónico</label><input id="l-email" type="email" autocomplete="email" value="${esc(arg.email || '')}"></div>
+      <div class="field"><label for="l-pass">Contraseña</label>
+        <div class="pwrow"><input id="l-pass" type="password" autocomplete="current-password"><button type="button" class="btn small" data-act="showpw" data-target="l-pass">Ver</button></div></div>
+      <div id="l-msg" role="alert"></div>
+      <button class="btn primary big" type="submit">Entrar</button>
+      <button class="linkbtn" type="button" data-act="go" data-to="register">Todavía no tengo cuenta</button>
+    </form>`;
+  $(arg.email ? '#l-pass' : '#l-email').focus();
+  $('#f-login').addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      state.user = await backend.login({email: $('#l-email').value, password: $('#l-pass').value});
+      await loadUserData();
+      go('menu');
+    } catch (err) {
+      $('#l-msg').innerHTML = err.code === 'bad_credentials'
+        ? '<div class="msg err">Revisa tu correo y tu contraseña e inténtalo de nuevo.</div>'
+        : '<div class="msg err">No pudimos conectar. Inténtalo otra vez en un momento.</div>';
+    }
+  });
+};
+
+async function loadUserData() {
+  state.attempts = await backend.listAttempts(state.user);
+  state.reco = await backend.latestRecommendation(state.user);
+}
+
+/* ---------- Menú principal ---------- */
+views.menu = () => {
+  const s = suggested(), lv = levelById(s.level_id), gm = gameById(lv.game_id);
+  $('#scr-menu').innerHTML = `
+    <div class="greet"><div class="cody-mid">${robotSVG()}</div><h2 tabindex="-1">¡Hola, ${esc(state.user.name)}!</h2></div>
+    <div class="mission">
+      <div class="txt"><small>Tu próxima misión</small><strong>${esc(gm.name)} · Nivel ${lv.number}: ${esc(lv.title)}</strong><small>${esc(s.reason)}</small></div>
+      <button class="btn go" data-act="open-level" data-id="${lv.id}">¡Vamos!</button>
+    </div>
+    <div class="menu">
+      <button class="btn go wide" data-act="go" data-to="games"><span class="ico">🎮</span>Jugar</button>
+      <button class="btn primary" data-act="go" data-to="levels" data-arg=""><span class="ico">🧩</span>Seleccionar nivel</button>
+      <button class="btn sun" data-act="go" data-to="history"><span class="ico">📒</span>Mis resultados</button>
+      <button class="btn violet" data-act="go" data-to="progress"><span class="ico">🏅</span>Mi progreso</button>
+      <button class="btn orange" data-act="go" data-to="help"><span class="ico">💡</span>Ayuda</button>
+      <button class="btn" data-act="logout"><span class="ico">👋</span>Cerrar sesión</button>
+    </div>
+    <p style="margin-top:18px"><button class="linkbtn" data-act="sound" id="sound-menu">${soundLabel()}</button></p>`;
+};
+
+/* ---------- Seleccionar juego ---------- */
+views.games = () => {
+  const st = statsByLevel(), sug = suggested(), sugGame = levelById(sug.level_id).game_id;
+  $('#scr-games').innerHTML = `
+    <div class="hdr">${backBtn('menu')}<h2>Elige un juego</h2></div>
+    <div class="games">${GAMES.map(g => {
+      const lvls = levelsOf(g.id), passed = lvls.filter(l => st[l.id] && st[l.id].passed).length;
+      return `<button class="gcard" data-act="open-game" data-id="${g.id}">
+        ${sugGame === g.id ? '<span class="chip sun reco">⭐ Recomendado</span>' : ''}
+        <div class="band ${g.color}"></div>
+        <h3>${esc(g.name)}</h3>
+        <p>${esc(g.description)}</p>
+        <p class="muted" style="font-size:.95rem">Aprendes: ${esc(g.area.toLowerCase())}</p>
+        <div class="dots" aria-label="${passed} de ${lvls.length} niveles superados">${lvls.map(l => `<i class="${st[l.id] && st[l.id].passed ? 'done' : st[l.id] ? 'tried' : ''}"></i>`).join('')}</div>
+      </button>`;}).join('')}
+    </div>`;
+};
+
+/* ---------- Seleccionar nivel ---------- */
+views.levels = (gid) => {
+  if (gid !== undefined) state.levelsGame = gid || null;
+  const gameId = state.levelsGame;
+  const st = statsByLevel(), sug = suggested();
+  const groups = GAMES.filter(g => !gameId || g.id === gameId);
+  $('#scr-levels').innerHTML = `
+    <div class="hdr">${backBtn(gameId ? 'games' : 'menu')}<h2>${gameId ? esc(gameById(gameId).name) : 'Elige un nivel'}</h2></div>
+    ${groups.map(g => `<div class="levelgroup">
+      ${gameId ? '' : `<h3><span class="chip ${g.color}">${esc(g.name)}</span></h3>`}
+      <div class="levels">${levelsOf(g.id).map(l => {
+        const s = st[l.id] || {tries: 0, best: 0, passed: false};
+        return `<button class="lcard ${s.passed ? 'done' : ''}" data-act="open-level" data-id="${l.id}">
+          ${sug.level_id === l.id ? '<span class="chip sun reco">⭐ Recomendado</span>' : ''}
+          <span class="muted">Nivel ${l.number} · ${l.difficulty}</span>
+          <span class="lt">${esc(l.title)}</span>
+          ${starsHTML(starsFor(s.best))}
+          <span class="muted" style="font-size:.9rem">${s.tries ? `Mejor puntaje: ${s.best} · ${s.tries} intento${s.tries > 1 ? 's' : ''}` : 'Aún no lo has jugado'}</span>
+        </button>`;}).join('')}
+      </div></div>`).join('')}`;
+};
+
+/* ---------- Instrucciones ---------- */
+views.instr = () => {
+  const lv = state.currentLevel, gm = gameById(lv.game_id);
+  const preview = lv.g
+    ? `<div class="board-wrap"><div class="board mini" style="--n:${lv.g.n}">${boardCells(lv.g)}<div class="robot" style="--r:${lv.g.start[0]};--c:${lv.g.start[1]}">${robotSVG()}</div></div></div>`
+    : `<ul class="steps-preview">${lv.steps.map(() => `<li>❔ Un paso de la tarea</li>`).join('')}</ul>`;
+  const fact = lv.g
+    ? `<div class="fact"><b>${lv.max_slots}</b><span>casillas para tu programa</span></div><div class="fact"><b>${lv.g.stars.length ? lv.g.stars.length + ' ⭐' : '🏁'}</b><span>${lv.g.stars.length ? 'estrellas y la bandera' : 'llegar a la bandera'}</span></div>`
+    : `<div class="fact"><b>${lv.steps.length}</b><span>tarjetas por ordenar</span></div><div class="fact"><b>🧠</b><span>piensa qué va primero</span></div>`;
+  $('#scr-instr').innerHTML = `
+    <div class="hdr">${backBtn('levels', '← Niveles')}<h2>${esc(gm.name)} · Nivel ${lv.number}</h2></div>
+    <div class="instr">
+      <div class="panel">
+        <span class="chip ${gm.color}" style="justify-self:start">${lv.difficulty}</span>
+        <h3>${esc(lv.title)}</h3>
+        <p style="font-size:1.2rem">${esc(lv.instructions)}</p>
+        <p class="muted">Lo que practicas: ${esc(gm.objective.charAt(0).toLowerCase() + gm.objective.slice(1))}</p>
+        <div class="facts">${fact}</div>
+        <button class="btn go big" data-act="start">¡Empezar!</button>
+        <p class="muted" style="font-size:.95rem">El tiempo empieza a contar cuando pulsas “¡Empezar!”.</p>
+      </div>
+      <div>${preview}</div>
+    </div>`;
+};
+
+/* ---------- Juego: piezas comunes ---------- */
+function boardCells(g) {
+  let out = '';
+  for (let r = 0; r < g.n; r++) for (let c = 0; c < g.n; c++) {
+    const si = starIndex(g, r, c);
+    const start = r === g.start[0] && c === g.start[1], goal = r === g.goal[0] && c === g.goal[1];
+    out += `<div class="cell${(r + c) % 2 ? ' alt' : ''}${start ? ' start' : ''}" data-r="${r}" data-c="${c}">${g.rocks.has(r + ',' + c) ? spr('rock') : ''}${goal ? spr('flag') : ''}${si >= 0 ? spr('star', 's' + si) : ''}</div>`;
+  }
+  return out;
+}
+function hudHTML(lv, gm) {
+  return `<div class="hud">
+    <div class="hud-title"><span class="chip ${gm.color}">${esc(gm.name)}</span><strong>Nivel ${lv.number} · ${esc(lv.title)}</strong></div>
+    <div class="stats" aria-label="Marcadores">
+      <div class="stat"><b id="h-time">00:00</b><span>Tiempo</span></div>
+      <div class="stat"><b id="h-moves">0</b><span>Movimientos</span></div>
+      <div class="stat"><b id="h-errors">0</b><span>Errores</span></div>
+      <div class="stat"><b id="h-hints">0</b><span>Pistas</span></div>
+    </div>
+    <div class="hud-actions"><button class="btn small" data-act="sound" id="sound-play">${soundLabel()}</button><button class="btn small" data-act="exit">Salir</button></div>
+  </div>
+  <div class="confirm" id="exit-box" hidden><p><strong>¿Quieres salir?</strong> Este intento no se guardará como completado.</p>
+    <button class="btn small go" data-act="exit-no">Seguir jugando</button><button class="btn small coral" data-act="exit-yes">Salir</button></div>
+  <div class="say" id="say"><div class="say-bot" id="say-bot">${robotSVG()}</div><p id="say-text" role="status" aria-live="polite"></p></div>`;
+}
+function say(text, tone = '') {
+  const box = $('#say'); if (!box) return;
+  box.className = 'say ' + tone;
+  $('#say-text').textContent = text;
+  $('#say-bot').innerHTML = robotSVG(tone === 'bad' ? 'hmm' : 'happy');
+}
+function updateHud() {
+  const p = state.play; if (!p) return;
+  $('#h-moves').textContent = p.movements; $('#h-errors').textContent = p.errors; $('#h-hints').textContent = p.hints;
+  const cnt = $('#prog-count'); if (cnt && p.level.g) cnt.textContent = `${p.program.length} de ${p.level.max_slots} casillas`;
+}
+const elapsed = () => ((state.play.endTs || Date.now()) - state.play.startTs) / 1000;
+function freezeTimer() {            // detiene el cronómetro en el instante en que se completa el desafío
+  const p = state.play; if (!p || p.endTs) return;
+  p.endTs = Date.now(); stopPlayTimers();
+  const t = $('#h-time'); if (t) t.textContent = mmss(elapsed());
+}
+const ev = (type, v) => ({t: Math.round(elapsed() * 10) / 10, type, v});
+
+function stopPlayTimers() {
+  const p = state.play; if (!p) return;
+  clearInterval(p.timer); clearTimeout(p.idle);
+}
+function resetIdle() {
+  const p = state.play; if (!p || p.finished) return;
+  clearTimeout(p.idle);
+  const hb = $('#btn-hint'); if (hb) hb.classList.remove('nudge');
+  p.idle = setTimeout(() => {
+    if (!state.play || state.play.finished || state.play.running) return;
+    const b = $('#btn-hint'); if (b) b.classList.add('nudge');
+    say('¿Necesitas una pista? Pulsa el botón 💡 cuando quieras.', 'hint');
+    state.play.events.push(ev('idle_nudge'));
+  }, 30000);
+}
+
+/* ---------- Iniciar prueba ---------- */
+function startAttempt() {
+  const lv = state.currentLevel, gm = gameById(lv.game_id);
+  const prior = state.attempts.filter(a => a.level_id === lv.id).length;
+  state.play = {
+    level: lv, game: gm, attemptNumber: prior + 1, startTs: Date.now(), startedAt: new Date().toISOString(),
+    movements: 0, errors: 0, hints: 0, hits: 0, misses: 0, events: [], running: false, finished: false,
+    program: [], lastRun: null, slots: [], pool: [], checked: null
+  };
+  const p = state.play;
+  p.events.push(ev('start'));
+  p.timer = setInterval(() => { const t = $('#h-time'); if (t) t.textContent = mmss(elapsed()); }, 250);
+  SCREENS.forEach(s => { $('#scr-' + s).hidden = s !== 'play'; });
+  if (lv.g) renderGridPlay(); else renderOrderPlay();
+  updateHud(); resetIdle(); window.scrollTo(0, 0);
+}
+
+/* ---------- Ruta del Robot / Estrellas en Camino ---------- */
+function renderGridPlay() {
+  const p = state.play, lv = p.level, g = lv.g;
+  $('#scr-play').innerHTML = `${hudHTML(lv, p.game)}
+    <div class="play">
+      <div class="board-wrap"><div class="board" id="board" style="--n:${g.n}">${boardCells(g)}<div class="robot" id="robot" style="--r:${g.start[0]};--c:${g.start[1]}">${robotSVG()}</div></div></div>
+      <div class="panel prog">
+        <h3>Tu programa <span class="count" id="prog-count"></span></h3>
+        <div class="tray" id="tray" aria-label="Instrucciones del programa"></div>
+        <div class="controls">
+          <div class="dpad" role="group" aria-label="Instrucciones">
+            ${['U', 'L', 'R', 'D'].map(d => `<button class="key ${d}" data-act="add" data-d="${d}" aria-label="Mover ${DIRNAME[d]}">${ARROW[d]}</button>`).join('')}
+          </div>
+          <div class="actions">
+            <button class="btn go big" data-act="run" id="btn-run">▶ Ejecutar</button>
+            <button class="btn" data-act="undo" id="btn-undo">⌫ Borrar último</button>
+            <button class="btn" data-act="clear" id="btn-clear">🗑 Borrar todo</button>
+            <button class="btn sun" data-act="hint" id="btn-hint">💡 Pista</button>
+          </div>
+        </div>
+        <p class="kbd">Con teclado: flechas para agregar, Enter para ejecutar, Retroceso para borrar.</p>
+      </div>
+    </div>`;
+  renderTray();
+  say(p.game.id === 'G2' ? 'Arma tu programa: recoge las estrellas ⭐ y llega a la bandera. Luego pulsa Ejecutar.' : 'Arma tu programa con las flechas y pulsa Ejecutar. ¡Yo te sigo!');
+}
+function renderTray(active = -1) {
+  const p = state.play, lv = p.level;
+  $('#tray').innerHTML = Array.from({length: lv.max_slots}, (_, i) => {
+    const d = p.program[i];
+    return `<div class="slot ${d ? 'filled d-' + d : ''} ${i === active ? 'on' : ''}" data-n="${i + 1}" ${d ? `aria-label="Instrucción ${i + 1}: ${DIRNAME[d]}"` : ''}>${d ? ARROW[d] : ''}</div>`;
+  }).join('');
+  updateHud();
+}
+function setControls(on) {
+  document.querySelectorAll('#scr-play .key, #btn-run, #btn-undo, #btn-clear, #btn-hint').forEach(b => b.disabled = !on);
+}
+function resetBoard() {
+  const p = state.play, g = p.level.g, rb = $('#robot');
+  rb.style.setProperty('--r', g.start[0]); rb.style.setProperty('--c', g.start[1]);
+  document.querySelectorAll('#board .sp.got').forEach(s => s.classList.remove('got'));
+  document.querySelectorAll('#board .cell.hit').forEach(s => s.classList.remove('hit'));
+}
+function addInstruction(d) {
+  const p = state.play; if (!p || p.running || p.finished || !p.level.g) return;
+  if (p.program.length >= p.level.max_slots) return say('¡Ya no caben más casillas! Borra alguna instrucción para cambiar tu programa.', 'bad');
+  p.program.push(d); p.movements++; p.lastRun = null; p.events.push(ev('add', d));
+  sfx('tap'); resetIdle(); renderTray(); resetBoard();
+  say(`Instrucción ${p.program.length}: ${ARROW[d]} ${DIRNAME[d]}.`);
+}
+function undoInstruction() {
+  const p = state.play; if (!p || p.running || p.finished || !p.program.length) return;
+  const d = p.program.pop(); p.lastRun = null; p.events.push(ev('remove', d)); resetIdle(); renderTray(); resetBoard();
+}
+function clearProgram() {
+  const p = state.play; if (!p || p.running || p.finished || !p.program.length) return;
+  p.events.push(ev('clear', p.program.join(''))); p.program = []; p.lastRun = null; resetIdle(); renderTray(); resetBoard();
+  say('Programa borrado. ¡Empieza de nuevo!');
+}
+async function executeProgram() {
+  const p = state.play; if (!p || p.running || p.finished) return;
+  if (!p.program.length) return say('Primero toca algunas flechas para armar tu programa.', 'hint');
+  p.running = true; setControls(false); clearTimeout(p.idle);
+  p.events.push(ev('run', p.program.join('')));
+  resetBoard(); await sleep(150);
+  const g = p.level.g, res = runProgram(g, p.program); p.lastRun = res;
+  const rb = $('#robot');
+  say('¡Allá voy!');
+  for (const st of res.steps) {
+    renderTray(st.i);
+    if (st.bump) {
+      rb.classList.add('shake');
+      if (st.bump === 'rock') { const cell = document.querySelector(`#board .cell[data-r="${st.rock[0]}"][data-c="${st.rock[1]}"]`); cell && cell.classList.add('hit'); }
+      sfx('bad'); await sleep(reduceMotion() ? 100 : 500); rb.classList.remove('shake'); break;
+    }
+    rb.style.setProperty('--r', st.pos[0]); rb.style.setProperty('--c', st.pos[1]);
+    await sleep(stepMs());
+    if (st.star >= 0) { const s = document.querySelector(`#board .sp.s${st.star}`); s && s.classList.add('got'); sfx('ok'); }
+  }
+  renderTray(-1);
+  p.hits += res.steps.filter(s => !s.bump).length;
+  if (res.success) {
+    p.running = false; freezeTimer();
+    say('¡Lo lograste! Cody llegó a la bandera.', 'good'); rb.classList.add('cheer'); sfx('win');
+    await sleep(reduceMotion() ? 200 : 1100);
+    return finishAttempt();
+  }
+  p.misses += 1; p.errors += 1; p.events.push(ev('error', res.bumpAt >= 0 ? 'bump' : 'incomplete'));
+  updateHud();
+  if (res.bumpAt >= 0) {
+    const what = res.steps[res.steps.length - 1].bump === 'rock' ? 'chocó con una roca' : 'se salió del mapa';
+    say(`¡Ups! Cody ${what} en la instrucción ${res.bumpAt + 1}. Cambia ese paso e inténtalo otra vez.`, 'bad');
+  } else if (g.stars.length && res.got.size < g.stars.length) {
+    say('Cody llegó al final de tu programa, pero le faltó recoger una estrella ⭐. ¡Ajusta el camino!', 'bad');
+  } else {
+    say('Cody terminó el programa, pero todavía no está en la bandera. ¡Sigue intentando!', 'bad');
+  }
+  await sleep(reduceMotion() ? 100 : 900);
+  resetBoard(); p.running = false; setControls(true); resetIdle();
+}
+
+/* ---------- Ordena los Pasos ---------- */
+function renderOrderPlay() {
+  const p = state.play, lv = p.level, n = lv.steps.length;
+  p.slots = Array(n).fill(null);
+  let idx = [...Array(n).keys()];
+  do { idx.sort(() => Math.random() - 0.5); } while (idx.every((v, i) => v === i));
+  p.pool = idx;
+  $('#scr-play').innerHTML = `${hudHTML(lv, p.game)}
+    <div class="order">
+      <div class="panel"><h3>Tu orden: ${esc(lv.title)}</h3><ol class="oslots" id="oslots"></ol></div>
+      <div class="panel"><h3>Tarjetas</h3><div class="pool" id="pool"></div>
+        <div class="actions" style="max-width:none;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+          <button class="btn go big" data-act="check" id="btn-check">✔ Comprobar</button>
+          <button class="btn" data-act="clear" id="btn-clear">🗑 Borrar todo</button>
+          <button class="btn sun" data-act="hint" id="btn-hint">💡 Pista</button>
+        </div></div>
+    </div>`;
+  renderOrder();
+  say('Toca las tarjetas en el orden correcto. Si te equivocas, toca una tarjeta puesta para devolverla.');
+}
+const cardHTML = (s, cls = '') => `<span class="ic">${s.icon}</span><span>${esc(s.text)}</span>`;
+function renderOrder() {
+  const p = state.play, lv = p.level;
+  $('#oslots').innerHTML = p.slots.map((c, i) => {
+    const st = p.checked ? (p.checked[i] ? 'okc' : 'badc') : '';
+    return `<li class="oslot ${c !== null ? 'placed' : ''} ${st}"><span class="num">${i + 1}</span>${
+      c !== null ? `<button class="step-card in-slot" data-act="unpick" data-i="${i}" aria-label="Devolver: ${esc(lv.steps[c].text)}">${cardHTML(lv.steps[c])}</button>`
+                 : `<span class="ph">Pon aquí el paso ${i + 1}</span>`}</li>`;
+  }).join('');
+  $('#pool').innerHTML = p.pool.length
+    ? p.pool.map(c => `<button class="step-card" data-act="pick" data-i="${c}">${cardHTML(lv.steps[c])}</button>`).join('')
+    : '<p class="muted">Ya usaste todas las tarjetas. Pulsa Comprobar.</p>';
+  updateHud();
+}
+function pickCard(c) {
+  const p = state.play; if (!p || p.finished) return;
+  const slot = p.slots.indexOf(null); if (slot < 0) return;
+  p.slots[slot] = c; p.pool = p.pool.filter(x => x !== c); p.checked = null;
+  p.movements++; p.events.push(ev('add', c + '@' + (slot + 1)));
+  sfx('tap'); resetIdle(); renderOrder();
+  say(p.pool.length ? `Tarjeta puesta en el paso ${slot + 1}.` : '¡Ya pusiste todas! Pulsa Comprobar.');
+}
+function unpickCard(slot) {
+  const p = state.play; if (!p || p.finished) return;
+  const c = p.slots[slot]; if (c === null) return;
+  p.slots[slot] = null; p.pool.push(c); p.checked = null;
+  p.events.push(ev('remove', c + '@' + (slot + 1))); resetIdle(); renderOrder();
+}
+function clearOrder() {
+  const p = state.play; if (!p || p.finished) return;
+  p.events.push(ev('clear')); p.pool = [...p.pool, ...p.slots.filter(c => c !== null)]; p.slots = p.slots.map(() => null); p.checked = null;
+  resetIdle(); renderOrder(); say('Tarjetas devueltas. ¡Empieza de nuevo!');
+}
+async function checkOrder() {
+  const p = state.play; if (!p || p.finished) return;
+  if (p.slots.includes(null)) return say('Todavía faltan tarjetas por colocar.', 'hint');
+  const n = p.slots.length; p.events.push(ev('check', p.slots.join('')));
+  p.checked = p.slots.map((c, i) => c === i);
+  const ok = p.checked.filter(Boolean).length;
+  p.hits += ok; p.misses += n - ok;
+  renderOrder();
+  if (ok === n) {
+    freezeTimer();
+    say('¡Todo en orden! Muy bien pensado.', 'good'); sfx('win');
+    await sleep(reduceMotion() ? 200 : 1100); return finishAttempt();
+  }
+  p.errors++; p.events.push(ev('error', 'order')); updateHud(); sfx('bad');
+  say(`Hay ${n - ok} tarjeta${n - ok > 1 ? 's' : ''} en un lugar equivocado (en rojo). Toca una para devolverla y cámbiala.`, 'bad');
+  resetIdle();
+}
+
+/* ---------- Ayuda contextual ---------- */
+function requestHint() {
+  const p = state.play; if (!p || p.running || p.finished) return;
+  p.hints++; p.events.push(ev('hint', p.hints));
+  const text = p.level.g ? gridHint(p.level, p.lastRun, p.hints) : orderHint(p.level, p.slots, p.hints);
+  say('💡 ' + text, 'hint'); updateHud(); resetIdle();
+}
+
+/* ---------- Terminar intento ---------- */
+async function finishAttempt() {
+  const p = state.play; if (!p || p.finished) return;
+  p.finished = true; stopPlayTimers();
+  const time = Math.max(1, Math.round(elapsed()));
+  const r = computeResult(p.level, p.hits, p.misses, p.movements, time, p.hints, true);
+  p.events.push(ev('complete'));
+  const rec = {
+    attempt_id: 'A-' + uid(), user_id: state.user.id, game_id: p.level.game_id, level_id: p.level.id,
+    attempt_number: p.attemptNumber, date: p.startedAt, score: r.score, accuracy: r.accuracy, time,
+    movements: p.movements, errors: p.errors, hints_used: p.hints, completed: true, approved: r.approved,
+    result: r.approved ? 'Aprobado' : 'No aprobado', events: p.events
+  };
+  let saved;
+  try { saved = await backend.saveAttempt(state.user, rec); }
+  catch (e) { saved = {attempt: rec, recommendation: null, saveError: true}; }
+  state.attempts.push(saved.attempt || rec);
+  if (saved.recommendation) state.reco = saved.recommendation;
+  go('result', {rec: saved.attempt || rec, reco: saved.recommendation, saveError: saved.saveError});
+}
+async function abandonAttempt() {
+  const p = state.play;
+  if (p && !p.finished && p.movements > 0) {
+    const time = Math.max(1, Math.round(elapsed()));
+    const rec = {
+      attempt_id: 'A-' + uid(), user_id: state.user.id, game_id: p.level.game_id, level_id: p.level.id,
+      attempt_number: p.attemptNumber, date: p.startedAt, score: 0, accuracy: 0, time,
+      movements: p.movements, errors: p.errors, hints_used: p.hints, completed: false, approved: false,
+      result: 'Incompleto', events: [...p.events, ev('abandon')]
+    };
+    try { await backend.saveAttempt(state.user, rec); state.attempts.push(rec); } catch (e) {}
+  }
+  if (p) { p.finished = true; stopPlayTimers(); }
+  state.play = null;
+}
+
+/* ---------- Resultado ---------- */
+views.result = async ({rec, reco, saveError}) => {
+  const lv = levelById(rec.level_id), gm = gameById(lv.game_id), ok = rec.approved;
+  const msg = ok
+    ? (rec.score >= 85 ? '¡Excelente trabajo! Has completado el nivel correctamente.' : '¡Muy bien! Superaste el nivel. Aún puedes hacerlo con menos pasos o más rápido.')
+    : '¡Puedes intentarlo nuevamente! Revisa las instrucciones y vuelve a resolver el desafío.';
+  $('#scr-result').innerHTML = `<div class="result">
+    <div class="rhead"><div class="cody-mid">${robotSVG(ok ? 'happy' : 'hmm')}</div>
+      <div><span class="chip ${gm.color}">${esc(gm.name)} · Nivel ${lv.number}</span><h2>RESULTADO</h2></div></div>
+    <p class="feedback"><strong>${ok ? 'Nivel superado.' : 'Nivel no superado todavía.'}</strong> ${msg}</p>
+    <div class="tiles">
+      <div class="tile ${ok ? 'pass' : 'fail'}"><b>${ok ? 'Aprobado' : 'No aprobado'}</b><span>Estado</span></div>
+      <div class="tile"><b>${rec.score} %</b><span>Puntaje</span></div>
+      <div class="tile"><b>${rec.accuracy} %</b><span>Aciertos</span></div>
+      <div class="tile"><b>${mmss(rec.time)}</b><span>Tiempo</span></div>
+      <div class="tile"><b>${rec.movements}</b><span>Movimientos</span></div>
+      <div class="tile"><b>${rec.errors}</b><span>Errores</span></div>
+      <div class="tile"><b>${rec.hints_used}</b><span>Ayudas usadas</span></div>
+    </div>
+    ${saveError ? '<div class="msg info">No pudimos enviar este resultado al servidor. Se guardó solo en esta pantalla.</div>' : ''}
+    <div class="pipeline" aria-live="polite" id="pipe">
+      <span class="pstep" id="p1">Datos guardados</span>→<span class="pstep" id="p2">SVM analiza tu desempeño</span>→<span class="pstep" id="p3">Recomendación lista</span>
+    </div>
+    <div id="next-slot"></div>
+    <div class="rbtns">
+      <button class="btn" data-act="retry" data-id="${lv.id}">🔁 Repetir este nivel</button>
+      <button class="btn" data-act="go" data-to="menu">Menú principal</button>
+    </div></div>`;
+  const step = async (id, cls) => { const el = $('#' + id); if (el) el.className = 'pstep ' + cls; };
+  const quick = reduceMotion() ? 40 : 450;
+  await step('p1', 'done'); await sleep(quick);
+  await step('p2', 'on'); await sleep(quick * 1.6);
+  if (!$('#next-slot')) return;
+  await step('p2', 'done');
+  if (!reco) { await step('p3', 'on'); return; }
+  await step('p3', 'done');
+  const nl = levelById(reco.level_id), ng = gameById(nl.game_id);
+  const verdict = reco.prediction === 'aprendio' ? 'El SVM dice que ya aprendiste este contenido.' : 'El SVM dice que conviene reforzar este contenido.';
+  $('#next-slot').innerHTML = `<div class="next">
+    <small class="muted">${verdict} Área: ${esc(reco.area)}.</small>
+    <strong>Siguiente actividad: ${esc(ng.name)} · Nivel ${nl.number} (${esc(nl.title)})</strong>
+    <p>${esc(reco.reason)}</p>
+    <div><button class="btn go" data-act="open-level" data-id="${nl.id}">Ir a la actividad recomendada</button></div>
+    ${svmDetailHTML(reco, featuresOf(rec))}
+    </div>`;
+};
+function svmDetailHTML(reco, f) {
+  const d = reco.decision;
+  const max = Math.max(2, Math.abs(d) * 1.3, ...f.map((v, i) => Math.abs(MODEL.w[i]) * 3));
+  const pct = Math.max(2, Math.min(98, 50 + (d / max) * 50));
+  const rows = MODEL.features.map((name, i) => ({
+    label: FEATURE_LABEL[name] || name,
+    contribution: MODEL.w[i] * (f[i] - MODEL.mean[i]) / MODEL.std[i]
+  })).sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution)).slice(0, 3);
+  const barMax = Math.max(0.001, ...rows.map(r => Math.abs(r.contribution)));
+  return `<details class="svmbox">
+    <summary>Ver cómo decidió el modelo SVM</summary>
+    <p class="muted" style="font-size:.92rem">Este veredicto sale del hiperplano de un SVM lineal entrenado con <strong>scikit-learn</strong> (aprendizaje supervisado, ajustado por validación cruzada). No es una copia aparte: son los mismos coeficientes <code>w</code> y <code>b</code> exportados por <code>recommender/model.py</code>, evaluados aquí en tu navegador.</p>
+    <div class="svmgauge"><div class="svmline"></div><div class="svmdot" style="left:${pct}%"></div>
+      <span class="lo">Reforzar</span><span class="hi">Aprendió</span></div>
+    <p style="font-size:.95rem"><strong>Valor de decisión:</strong> ${d.toFixed(3)} ${d >= 0 ? '(≥ 0 → aprendió)' : '(&lt; 0 → reforzar)'}</p>
+    <p class="muted" style="font-size:.85rem;margin-bottom:4px">Lo que más pesó en esta decisión:</p>
+    <div class="svmbars">${rows.map(r => `<div class="svmbar-row"><span>${esc(r.label)}</span><div class="svmbar-track"><div class="svmbar-fill ${r.contribution >= 0 ? 'pos' : 'neg'}" style="width:${Math.abs(r.contribution) / barMax * 100}%"></div></div></div>`).join('')}</div>
+  </details>`;
+}
+
+/* ---------- Mis resultados ---------- */
+views.history = () => {
+  const rows = [...state.attempts].sort((a, b) => b.date.localeCompare(a.date));
+  $('#scr-history').innerHTML = `
+    <div class="hdr">${backBtn('menu')}<h2>Mis resultados</h2></div>` + (rows.length ? `
+    <div class="tablewrap"><table>
+      <thead><tr><th>Fecha</th><th>Juego</th><th>Nivel</th><th>Puntaje</th><th>Tiempo</th><th>Movimientos</th><th>Resultado</th></tr></thead>
+      <tbody>${rows.map(a => {
+        const lv = levelById(a.level_id), gm = gameById(a.game_id);
+        const cls = a.result === 'Aprobado' ? 'ok' : a.result === 'Incompleto' ? 'inc' : 'no';
+        return `<tr><td>${shortDate(a.date)}</td><td>${esc(gm.name)}</td><td>Nivel ${lv.number}</td>
+          <td>${a.completed ? a.score + ' %' : '—'}</td><td>${a.time} s</td><td>${a.movements}</td><td><span class="badge ${cls}">${a.result}</span></td></tr>`;
+      }).join('')}</tbody></table></div>` : `
+    <div class="panel empty"><div class="cody-mid">${robotSVG()}</div><p>Todavía no has jugado. ¡Tu primera misión te espera!</p>
+      <button class="btn go" data-act="go" data-to="games">Jugar ahora</button></div>`);
+};
+
+/* ---------- Mi progreso ---------- */
+views.progress = () => {
+  const st = statsByLevel(), total = LEVELS.length;
+  const passed = LEVELS.filter(l => st[l.id] && st[l.id].passed).length;
+  const done = state.attempts.filter(a => a.completed).slice(-15);
+  $('#scr-progress').innerHTML = `
+    <div class="hdr">${backBtn('menu')}<h2>Mi progreso</h2></div>
+    <div class="panel" style="margin-bottom:16px">
+      <h3>Misiones superadas: ${passed} de ${total}</h3>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${passed}"><i style="width:${Math.round(passed / total * 100)}%"></i></div>
+      ${state.reco ? `<p class="muted">Área para reforzar según el SVM: <strong>${esc(state.reco.prediction === 'refuerzo' ? state.reco.area : 'ninguna por ahora')}</strong></p>` : ''}
+    </div>
+    <div class="pgrid">
+      <div class="panel">${GAMES.map(g => `<div class="track"><h3><span class="chip ${g.color}">${esc(g.name)}</span></h3><div class="row">
+        ${levelsOf(g.id).map((l, i) => { const s = st[l.id]; const cls = s && s.passed ? 'done' : s ? 'tried' : '';
+          return (i ? `<span class="link ${s && s.passed ? 'done' : ''}"></span>` : '') +
+            `<div class="node ${cls}"><div class="dot">${s && s.passed ? '✔' : l.number}</div>${starsHTML(starsFor(s ? s.best : 0))}<small>${s ? 'Mejor: ' + s.best : 'Sin jugar'}</small></div>`; }).join('')}
+      </div></div>`).join('')}</div>
+      <div class="panel"><h3>Tu evolución</h3>${sparkline(done)}
+        <p class="muted" style="font-size:.95rem">Cada punto es un nivel completado. La línea verde marca el puntaje para aprobar (${PASS_SCORE}).</p></div>
+    </div>
+    <p style="margin-top:20px"><button class="linkbtn" data-act="go" data-to="teacher">Datos para el docente (SVM)</button></p>`;
+};
+function sparkline(list) {
+  if (list.length < 2) return '<p class="muted">Completa al menos dos niveles para ver cómo avanzas.</p>';
+  const W = 320, H = 130, px = 26, py = 14;
+  const x = i => px + i * (W - px - 10) / (list.length - 1), y = s => H - py - s * (H - 2 * py) / 100;
+  const pts = list.map((a, i) => `${x(i).toFixed(1)},${y(a.score).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Puntajes de tus últimos ${list.length} niveles">
+    <line class="pass" x1="${px}" x2="${W - 10}" y1="${y(PASS_SCORE)}" y2="${y(PASS_SCORE)}"/>
+    <text x="0" y="${y(100) + 4}">100</text><text x="6" y="${y(0) + 4}">0</text>
+    <polyline class="ln" points="${pts}"/>
+    ${list.map((a, i) => `<circle cx="${x(i)}" cy="${y(a.score)}" r="5" fill="${isApproved(a) ? 'var(--mint)' : 'var(--coral)'}" stroke="var(--outline)" stroke-width="2"/>`).join('')}</svg>`;
+}
+
+/* ---------- Ayuda ---------- */
+views.help = () => {
+  $('#scr-help').innerHTML = `
+    <div class="hdr">${backBtn('menu')}<h2>Ayuda</h2></div>
+    <div class="helpgrid help">
+      <div class="panel"><span class="chip blue" style="justify-self:start">Ruta del Robot</span>
+        <p>Cody es un robot que solo entiende flechas. Arma un programa con ellas y pulsa <strong>Ejecutar</strong>: Cody las hará una por una hasta llegar a la bandera 🏁.</p>
+        <p class="muted">Las rocas no se pueden pisar.</p></div>
+      <div class="panel"><span class="chip sun" style="justify-self:start">Estrellas en Camino</span>
+        <p>Igual que antes, pero primero Cody debe pisar todas las estrellas ⭐ y después llegar a la bandera. ¡Planea el recorrido!</p></div>
+      <div class="panel"><span class="chip violet" style="justify-self:start">Ordena los Pasos</span>
+        <p>Toca las tarjetas en el orden correcto, como los pasos de una receta. Cuando termines, pulsa <strong>Comprobar</strong>.</p></div>
+    </div>
+    <div class="panel help" style="margin-top:16px"><h3>Botones que te ayudan</h3>
+      <ul class="plain">
+        <li><strong>⌫ Borrar último</strong> quita la última instrucción.</li>
+        <li><strong>🗑 Borrar todo</strong> empieza de nuevo.</li>
+        <li><strong>💡 Pista</strong> te da una idea para seguir. No te dice todo: la respuesta la encuentras tú. Cada pista resta 5 puntos.</li>
+        <li>Si pasas mucho tiempo sin avanzar, el botón de pista se pone a saltar.</li>
+      </ul>
+      <p class="muted">Buen consejo: los buenos programadores piensan todo el camino antes de poner la primera flecha.</p></div>`;
+};
+
+/* ---------- Docente: datos para el SVM ---------- */
+const CSV_FIELDS = ['user_id', 'game_id', 'level_id', 'attempt_id', 'score', 'accuracy', 'time', 'movements', 'errors', 'hints_used', 'completed', 'date'];
+const toCSV = rows => [CSV_FIELDS.join(',')].concat(rows.map(r => CSV_FIELDS.map(f => String(r[f])).join(','))).join('\n');
+views.teacher = () => {
+  const rows = state.attempts, m = MODEL.meta || {};
+  const pct = v => v == null ? '—' : (v * 100).toFixed(1) + ' %';
+  $('#scr-teacher').innerHTML = `
+    <div class="hdr">${backBtn('progress')}<h2>Datos para el docente</h2></div>
+    <div class="panel" style="margin-bottom:16px"><h3>Modelo SVM que analiza los resultados</h3>
+      <p class="muted" style="margin-top:-6px">Aprendizaje <strong>supervisado</strong>: el SVM se entrenó con casos etiquetados (aprendió / necesita reforzar) usando <code>scikit-learn</code>, y cada recomendación que ves en el juego se calcula con esos mismos coeficientes — no hay una copia aparte ni una regla escrita a mano.</p>
+      <div class="kv">
+        <div class="fact"><b>${esc(m.kernel || 'lineal')}</b><span>núcleo</span></div>
+        <div class="fact"><b>C = ${m.C}</b><span>elegido por validación cruzada</span></div>
+        <div class="fact"><b>${pct(m.test_precision)}</b><span>precisión (prueba)</span></div>
+        <div class="fact"><b>${pct(m.test_recall)}</b><span>recall (prueba)</span></div>
+        <div class="fact"><b>${m.samples}</b><span>casos simulados</span></div>
+      </div>
+      <p class="muted">Modo de datos: <strong>${backend.mode === 'local' ? 'este dispositivo' : 'servidor remoto (compartido)'}</strong>. El modelo se entrenó con ${esc(m.trained_on || 'casos simulados')}; las cifras miden su ajuste a esos casos, no el aprendizaje real de estudiantes. ${backend.mode === 'local' ? 'Conecta <code>?api=</code> a un servidor con este mismo modelo para pasar a datos compartidos.' : 'Los datos de esta pantalla vienen del servidor conectado, no de este navegador.'}</p></div>
+    <div class="panel"><h3>Registros del estudiante (${rows.length})</h3>
+      <div class="tablewrap"><table><thead><tr>${CSV_FIELDS.map(f => `<th>${f}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r => `<tr>${CSV_FIELDS.map(f => `<td>${f === 'date' ? esc(String(r[f]).slice(0, 16).replace('T', ' ')) : esc(r[f])}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${CSV_FIELDS.length}">Sin registros todavía.</td></tr>`}</tbody></table></div>
+      <textarea class="csv" id="csv" readonly aria-label="Datos en formato CSV">${esc(toCSV(rows))}</textarea>
+      <div class="rbtns"><button class="btn small" data-act="copy-csv">Copiar CSV</button>
+        <button class="btn small coral" data-act="wipe" id="btn-wipe">Borrar datos de este dispositivo</button></div>
+      <div id="t-msg" aria-live="polite"></div></div>`;
+};
+
+/* ---------- Estudiante de ejemplo ---------- */
+async function seedDemo() {
+  const email = 'ana@ejemplo.cgame';
+  let users = Store.get('cgame:users', []);
+  if (!users.some(u => u.email === email)) {
+    const u = await LocalBackend.register({name: 'Ana', email, password: 'ejemplo123'});
+    // [nivel, aciertos, fallos, movimientos, segundos, errores, pistas, días atrás]
+    const plan = [['G1-L1', 9, 3, 7, 62, 2, 1, 9], ['G1-L1', 5, 0, 5, 31, 0, 0, 8], ['G1-L2', 14, 10, 14, 150, 3, 2, 6],
+      ['G1-L2', 12, 4, 10, 95, 1, 1, 5], ['G1-L2', 8, 0, 8, 70, 0, 0, 4], ['G1-L3', 30, 15, 22, 260, 3, 2, 3],
+      ['G3-L1', 4, 0, 4, 25, 0, 0, 2], ['G3-L2', 8, 3, 6, 60, 1, 1, 1]];
+    const all = Store.get('cgame:attempts', []), counts = {};
+    plan.forEach(([lid, h, m, mv, t, er, hi, days], i) => {
+      const lv = levelById(lid), r = computeResult(lv, h, m, mv, t, hi, true);
+      counts[lid] = (counts[lid] || 0) + 1;
+      all.push({attempt_id: 'A-demo' + i, user_id: u.id, game_id: lv.game_id, level_id: lid, attempt_number: counts[lid],
+        date: new Date(Date.now() - days * 86400000).toISOString(), score: r.score, accuracy: r.accuracy, time: t, movements: mv,
+        errors: er, hints_used: hi, completed: true, approved: r.approved, result: r.approved ? 'Aprobado' : 'No aprobado', events: []});
+    });
+    Store.set('cgame:attempts', all);
+    const reco = recommendLocal(all.filter(a => a.user_id === u.id));
+    const recos = Store.get('cgame:recos', []);
+    recos.push({user_id: u.id, attempt_id: 'A-demo7', level_recommended: reco.level_id, reason: reco.reason, date: new Date().toISOString(), ...reco});
+    Store.set('cgame:recos', recos);
+  }
+  state.user = await LocalBackend.login({email, password: 'ejemplo123'});
+  await loadUserData();
+}
+
+/* =====================================================================
+   Eventos
+   ===================================================================== */
+const actions = {
+  go: d => go(d.to, d.arg),
+  showpw: d => { const i = $('#' + d.target); i.type = i.type === 'password' ? 'text' : 'password'; },
+  demo: async () => { await seedDemo(); go('menu'); },
+  logout: async () => { await backend.logout(); state.user = null; state.attempts = []; state.reco = null; state.play = null; go('splash'); },
+  sound: () => { state.sound = !state.sound; Store.set('cgame:sound', state.sound); document.querySelectorAll('#sound-menu,#sound-play').forEach(b => b.textContent = soundLabel()); if (state.sound) sfx('ok'); },
+  'open-game': d => go('levels', d.id),
+  'open-level': d => { state.currentLevel = levelById(d.id); go('instr'); },
+  retry: d => { state.currentLevel = levelById(d.id); startAttempt(); },
+  start: () => startAttempt(),
+  add: d => addInstruction(d.d),
+  undo: undoInstruction,
+  run: executeProgram,
+  clear: () => state.play && state.play.level.g ? clearProgram() : clearOrder(),
+  hint: requestHint,
+  pick: d => pickCard(+d.i),
+  unpick: d => unpickCard(+d.i),
+  check: checkOrder,
+  exit: () => { $('#exit-box').hidden = false; },
+  'exit-no': () => { $('#exit-box').hidden = true; },
+  'exit-yes': async () => { await abandonAttempt(); go('levels'); },
+  'copy-csv': async () => {
+    const ta = $('#csv'), box = $('#t-msg'); let ok = false;
+    try { await navigator.clipboard.writeText(ta.value); ok = true; } catch (e) {}
+    if (!ok) { ta.select(); try { ok = document.execCommand('copy'); } catch (e) {} }
+    box.innerHTML = ok ? '<div class="msg ok">CSV copiado.</div>' : '<div class="msg info">Selecciona el texto y cópialo con Ctrl+C.</div>';
+  },
+  wipe: async d => {
+    const b = $('#btn-wipe');
+    if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = '¿Seguro? Pulsa otra vez'; return; }
+    await backend.wipe(); state.user = null; state.attempts = []; state.reco = null; go('splash');
+  }
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const fn = actions[el.dataset.act]; if (fn) fn(el.dataset, el);
+});
+document.addEventListener('keydown', e => {
+  const p = state.play;
+  if (!p || p.finished || !p.level.g || $('#scr-play').hidden) return;
+  if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  const map = {ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R'};
+  if (map[e.key]) { e.preventDefault(); addInstruction(map[e.key]); }
+  else if (e.key === 'Enter' && !(e.target && e.target.closest && e.target.closest('button'))) { e.preventDefault(); executeProgram(); }
+  else if (e.key === 'Backspace') { e.preventDefault(); undoInstruction(); }
+});
+
+/* ---------- Arranque ---------- */
+/* Despierta el servidor (los planes gratuitos lo duermen) y avisa si no responde */
+async function wakeServer(maxSeconds = 75) {
+  const box = document.getElementById('scr-splash');
+  SCREENS.forEach(s => { $('#scr-' + s).hidden = s !== 'splash'; });
+  const started = Date.now();
+  while ((Date.now() - started) / 1000 < maxSeconds) {
+    box.innerHTML = `<div class="splash"><div class="splash-inner">
+      <div class="cody-big">${robotSVG('hmm')}</div>
+      <h1 class="wordmark" aria-label="CGAME"><span>C</span><span>G</span><span>A</span><span>M</span><span>E</span></h1>
+      <p class="lead" role="status">Despertando el servidor… puede tardar hasta un minuto la primera vez.</p>
+      <p class="muted">${Math.round((Date.now() - started) / 1000)} s</p></div></div>`;
+    try {
+      const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/health', {signal: ctrl.signal});
+      clearTimeout(t);
+      if (res.ok) return true;
+    } catch (e) {}
+    await sleep(2500);
+  }
+  return false;
+}
+function offlineChoice() {
+  const local = location.origin + location.pathname;
+  $('#scr-splash').innerHTML = `<div class="splash"><div class="splash-inner">
+    <div class="cody-big">${robotSVG('hmm')}</div>
+    <h1 class="wordmark" aria-label="CGAME"><span>C</span><span>G</span><span>A</span><span>M</span><span>E</span></h1>
+    <p class="lead">No pudimos conectar con el servidor de CGAME.</p>
+    <div class="stack">
+      <button class="btn primary big" onclick="location.reload()">Reintentar</button>
+      <a class="btn big" href="${local}">Jugar sin conexión (este dispositivo)</a>
+    </div>
+    <p class="muted" style="font-size:.95rem">Sin conexión, tu progreso se guarda solo en este navegador y no llega al docente.</p>
+  </div></div>`;
+}
+(async function boot() {
+  if (backend.mode === 'remote') {
+    const ok = await wakeServer();
+    if (!ok) return offlineChoice();
+  }
+  try {
+    const u = await backend.restore();
+    if (u) { state.user = u; await loadUserData(); return go('menu'); }
+  } catch (e) {}
+  go('splash');
+})();
+</script>
+</body>
+</html>
