@@ -6,7 +6,7 @@ actividad de cada estudiante.
 
 ## Cómo jugarlo
 
-Abre **`client/cgame.html`** en cualquier navegador (Chrome, Edge, Firefox). No necesita
+Abre **`client/index.html`** en cualquier navegador (Chrome, Edge, Firefox). No necesita
 instalación ni servidor: funciona como una página normal, guardando los datos del
 estudiante en el propio dispositivo (`localStorage`). Hay un botón "Probar con un
 estudiante de ejemplo" en la pantalla inicial para ver el juego ya con historial.
@@ -57,12 +57,16 @@ cgame/
 │   │   ├── simulate.py        # Generador de casos simulados (entrenamiento y datos de prueba)
 │   │   ├── model.py           # Entrenamiento del SVM (scikit-learn) + serialización a JSON
 │   │   ├── recommend.py       # Lógica de recomendación (avanzar/reforzar/bajar nivel/repasar)
-│   │   └── train.py           # CLI: entrena y exporta modelo + informe + CSV de prueba
-│   ├── tests/test_recommender.py   # 13 pruebas unitarias (niveles, puntaje, recomendación)
+│   │   ├── train.py           # CLI: entrena con casos simulados (modelo inicial)
+│   │   ├── replay.py          # El servidor vuelve a jugar los eventos y recalcula el puntaje
+│   │   ├── dataset.py         # Une intentos reales + evaluaciones del docente (sin mezclar el futuro)
+│   │   └── train_real.py      # Entrena con datos reales, separando alumnos en entrenamiento y prueba
+│   ├── server/                # API Flask + manage.py (rol docente, estadísticas)
+│   ├── tests/                 # 32 pruebas: recomendador, replay, servidor, migración y entrenamiento
 │   └── data/                  # svm_model.json, training_report.json, sample_attempts.csv
 ├── client/
 │   ├── src/index.template.html     # Código fuente del juego (HTML+CSS+JS, un solo archivo)
-│   └── cgame.html                  # Build final: plantilla + niveles + modelo ya inyectados
+│   └── index.html                  # Build final (lo que publica GitHub Pages)
 └── tools/build_client.py      # Inyecta shared/levels.json y el modelo entrenado en el cliente
 ```
 
@@ -87,7 +91,7 @@ extremo a extremo:
   mismos métodos (`register`, `login`, `saveAttempt`, `latestRecommendation`, etc.). Hoy
   el juego usa `LocalBackend` (guarda en el dispositivo); el día que exista un servidor
   Django real con esos mismos endpoints, basta con abrir el juego como
-  `cgame.html?api=https://tu-servidor/api` para que hable con él sin tocar el resto del
+  `index.html?api=https://tu-servidor/api` para que hable con él sin tocar el resto del
   código.
 - **Firebase** cumpliría el mismo papel que hoy cumple `localStorage` en el cliente:
   guardar los datos del usuario. Migrar de uno a otro no cambia el resto del sistema,
@@ -121,8 +125,10 @@ Python en cientos de casos aleatorios, así que ambas piezas están sincronizada
 
 ## Pruebas realizadas
 
-- 13 pruebas unitarias de Python (niveles solucionables por BFS, puntaje, y las 6 ramas
-  de la lógica de recomendación) — todas pasan.
+- 32 pruebas de Python (`python -m unittest discover -s tests -t .` desde `backend/`).
+  Las 13 originales cubren niveles solucionables por BFS, puntaje y las 6 ramas
+  de la lógica de recomendación; las nuevas, el replay de eventos, el servidor, la
+  migración de la base y el entrenamiento con datos reales. Todas pasan.
 - Pruebas de navegador (Playwright) que comparan 300 casos aleatorios de puntaje y 300
   de recomendación entre el JavaScript del cliente y el Python del backend: 0
   diferencias.
@@ -146,3 +152,12 @@ desplegarlo (Render, Railway, Fly.io, un VPS propio) en `backend/server/README.m
 Una vez que el servidor esté en línea con una URL pública, el juego publicado se
 conecta agregando `?api=https://tu-servidor/api` a la URL — sin tocar nada más del
 cliente.
+
+## Aprendizaje supervisado con datos reales
+
+El servidor ya junta intentos **verificados**: recalcula el puntaje a partir de los
+eventos del juego y cronometra cada intento, así que nadie puede falsificar los datos.
+Además, guarda las evaluaciones del docente ("aprendió / no aprendió") que se cargan en
+el **Panel docente**, y `recommender/train_real.py` entrena el SVM con ellas, separando
+los alumnos en entrenamiento y prueba para no inflar los resultados. El paso a paso está
+en `backend/server/README.md` → *Aprendizaje supervisado con datos reales*.

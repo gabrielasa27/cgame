@@ -331,6 +331,17 @@ tr:last-child td{border-bottom:0}
 .badge{display:inline-block;padding:1px 12px;border-radius:999px;border:2px solid var(--outline);font-weight:600;font-size:.9rem}
 .badge.ok{background:var(--good-bg)}.badge.no{background:var(--bad-bg)}.badge.inc{background:var(--warn-bg)}
 .empty{text-align:center;padding:36px 18px;display:grid;gap:14px;justify-items:center}
+/* Panel docente: etiquetas para el aprendizaje supervisado */
+.ltable td,.ltable th{padding:8px 10px;text-align:center}.ltable td:first-child,.ltable th:first-child{text-align:left;position:sticky;left:0;background:var(--card);z-index:1}
+.ltable th:first-child{background:var(--card2)}
+.lcell{display:grid;gap:4px;justify-items:center;font-size:.85rem}
+.lbtns{display:flex;gap:4px}
+.lbtn{min-width:40px;min-height:40px;border-radius:10px;border:2px solid var(--outline);background:var(--card);font-size:1.05rem;cursor:pointer;font-family:inherit;color:var(--ink)}
+.lbtn:disabled{opacity:.35;cursor:not-allowed}
+.lbtn.on.yes{background:var(--mint);color:#fff}.lbtn.on.no{background:var(--coral);color:#fff}
+.lbtn:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.lform{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.lform input{min-height:44px;border:3px solid var(--outline);border-radius:12px;padding:4px 10px;font:inherit;background:var(--card);color:var(--ink)}
 .empty .cody-mid{width:110px}
 .bar{height:22px;border:3px solid var(--outline);border-radius:999px;background:var(--card);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--mint);transition:width .5s}
@@ -390,6 +401,7 @@ ul.plain{margin:0;padding-left:20px}
   <section class="screen" id="scr-progress" hidden></section>
   <section class="screen" id="scr-help" hidden></section>
   <section class="screen" id="scr-teacher" hidden></section>
+  <section class="screen" id="scr-labels" hidden></section>
 </main>
 
 <script>
@@ -728,7 +740,7 @@ const LocalBackend = {
   async wipe() { ['cgame:users', 'cgame:attempts', 'cgame:recos', 'cgame:session'].forEach(Store.del); }
 };
 
-/* Modo remoto: el juego habla con el backend Django (/api/...) usando ?api=http://localhost:8000/api */
+/* Modo remoto: el juego habla con el servidor (backend/server/app.py) usando ?api=https://tu-servidor/api */
 function makeRemoteBackend(base) {
   const tokenKey = 'cgame:token';
   async function call(path, opts = {}) {
@@ -751,7 +763,19 @@ function makeRemoteBackend(base) {
     async listAttempts() { return (await call('/attempts')).attempts; },
     async saveAttempt(user, rec) { return call('/attempts', {method: 'POST', body: rec}); },
     async latestRecommendation() { return (await call('/recommendation')).recommendation; },
-    async wipe() {}
+    async wipe() {},
+    /* El servidor cronometra el intento y le asigna el id (datos confiables para entrenar). */
+    async startAttempt(levelId) { return (await call('/attempts/start', {method: 'POST', body: {level_id: levelId}})).attempt_id; },
+    async serverModel() { return call('/model'); },
+    teacher: {
+      students: () => call('/teacher/students'),
+      addLabel: body => call('/teacher/labels', {method: 'POST', body}),
+      async datasetCSV() {
+        const res = await fetch(base + '/teacher/dataset.csv', {headers: {Authorization: 'Bearer ' + Store.get(tokenKey, null)}});
+        if (!res.ok) throw new ApiError('server_error');
+        return res.text();
+      }
+    }
   };
 }
 const API_BASE = new URLSearchParams(location.search).get('api');
@@ -761,7 +785,7 @@ const backend = API_BASE ? makeRemoteBackend(API_BASE.replace(/\/$/, '')) : Loca
    Estado y navegación
    ===================================================================== */
 const state = {user: null, attempts: [], reco: null, play: null, sound: Store.get('cgame:sound', false), levelsGame: null, currentLevel: null};
-const SCREENS = ['splash', 'register', 'login', 'menu', 'games', 'levels', 'instr', 'play', 'result', 'history', 'progress', 'help', 'teacher'];
+const SCREENS = ['splash', 'register', 'login', 'menu', 'games', 'levels', 'instr', 'play', 'result', 'history', 'progress', 'help', 'teacher', 'labels'];
 const views = {};
 
 function go(name, arg) {
@@ -881,6 +905,7 @@ views.menu = () => {
       <button class="btn sun" data-act="go" data-to="history"><span class="ico">📒</span>Mis resultados</button>
       <button class="btn violet" data-act="go" data-to="progress"><span class="ico">🏅</span>Mi progreso</button>
       <button class="btn orange" data-act="go" data-to="help"><span class="ico">💡</span>Ayuda</button>
+      ${state.user.role === 'teacher' ? '<button class="btn primary wide" data-act="go" data-to="labels"><span class="ico">🧑‍🏫</span>Panel docente: evaluar alumnos</button>' : ''}
       <button class="btn" data-act="logout"><span class="ico">👋</span>Cerrar sesión</button>
     </div>
     <p style="margin-top:18px"><button class="linkbtn" data-act="sound" id="sound-menu">${soundLabel()}</button></p>`;
@@ -1021,6 +1046,7 @@ function startAttempt() {
     program: [], lastRun: null, slots: [], pool: [], checked: null
   };
   const p = state.play;
+  p.serverId = backend.startAttempt ? backend.startAttempt(lv.id).catch(() => null) : Promise.resolve(null);
   p.events.push(ev('start'));
   p.timer = setInterval(() => { const t = $('#h-time'); if (t) t.textContent = mmss(elapsed()); }, 250);
   SCREENS.forEach(s => { $('#scr-' + s).hidden = s !== 'play'; });
@@ -1216,7 +1242,7 @@ async function finishAttempt() {
   const r = computeResult(p.level, p.hits, p.misses, p.movements, time, p.hints, true);
   p.events.push(ev('complete'));
   const rec = {
-    attempt_id: 'A-' + uid(), user_id: state.user.id, game_id: p.level.game_id, level_id: p.level.id,
+    attempt_id: (await p.serverId) || 'A-' + uid(), user_id: state.user.id, game_id: p.level.game_id, level_id: p.level.id,
     attempt_number: p.attemptNumber, date: p.startedAt, score: r.score, accuracy: r.accuracy, time,
     movements: p.movements, errors: p.errors, hints_used: p.hints, completed: true, approved: r.approved,
     result: r.approved ? 'Aprobado' : 'No aprobado', events: p.events
@@ -1233,12 +1259,12 @@ async function abandonAttempt() {
   if (p && !p.finished && p.movements > 0) {
     const time = Math.max(1, Math.round(elapsed()));
     const rec = {
-      attempt_id: 'A-' + uid(), user_id: state.user.id, game_id: p.level.game_id, level_id: p.level.id,
+      attempt_id: (await p.serverId) || 'A-' + uid(), user_id: state.user.id, game_id: p.level.game_id, level_id: p.level.id,
       attempt_number: p.attemptNumber, date: p.startedAt, score: 0, accuracy: 0, time,
       movements: p.movements, errors: p.errors, hints_used: p.hints, completed: false, approved: false,
       result: 'Incompleto', events: [...p.events, ev('abandon')]
     };
-    try { await backend.saveAttempt(state.user, rec); state.attempts.push(rec); } catch (e) {}
+    try { const saved = await backend.saveAttempt(state.user, rec); state.attempts.push(saved.attempt || rec); } catch (e) {}
   }
   if (p) { p.finished = true; stopPlayTimers(); }
   state.play = null;
@@ -1400,9 +1426,9 @@ views.teacher = () => {
         <div class="fact"><b>C = ${m.C}</b><span>elegido por validación cruzada</span></div>
         <div class="fact"><b>${pct(m.test_precision)}</b><span>precisión (prueba)</span></div>
         <div class="fact"><b>${pct(m.test_recall)}</b><span>recall (prueba)</span></div>
-        <div class="fact"><b>${m.samples}</b><span>casos simulados</span></div>
+        <div class="fact"><b>${m.samples}</b><span>${m.students ? 'evaluaciones reales' : 'casos simulados'}</span></div>
       </div>
-      <p class="muted">Modo de datos: <strong>${backend.mode === 'local' ? 'este dispositivo' : 'servidor Django'}</strong>. El modelo se entrenó con ${esc(m.trained_on || 'casos simulados')}; las cifras miden su ajuste a esos casos, no el aprendizaje real de estudiantes. Conecta <code>?api=</code> a un servidor con este mismo modelo para pasar a datos reales sin cambiar el juego.</p></div>
+      <p class="muted">Modo de datos: <strong>${backend.mode === 'local' ? 'este dispositivo' : 'servidor remoto (compartido)'}</strong>. El modelo se entrenó con ${esc(m.trained_on || 'casos simulados')}; ${m.students ? `las cifras miden cuánto coincide con la evaluación del docente en ${m.test_students} alumnos que el modelo no vio al entrenar.` : 'las cifras miden su ajuste a esos casos, no el aprendizaje real de estudiantes.'} ${backend.mode === 'local' ? 'Conecta <code>?api=</code> a un servidor con este mismo modelo para pasar a datos compartidos.' : 'Los datos de esta pantalla vienen del servidor conectado, no de este navegador.'}</p></div>
     <div class="panel"><h3>Registros del estudiante (${rows.length})</h3>
       <div class="tablewrap"><table><thead><tr>${CSV_FIELDS.map(f => `<th>${f}</th>`).join('')}</tr></thead>
       <tbody>${rows.map(r => `<tr>${CSV_FIELDS.map(f => `<td>${f === 'date' ? esc(String(r[f]).slice(0, 16).replace('T', ' ')) : esc(r[f])}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${CSV_FIELDS.length}">Sin registros todavía.</td></tr>`}</tbody></table></div>
@@ -1411,6 +1437,84 @@ views.teacher = () => {
         <button class="btn small coral" data-act="wipe" id="btn-wipe">Borrar datos de este dispositivo</button></div>
       <div id="t-msg" aria-live="polite"></div></div>`;
 };
+
+/* ---------- Panel docente: etiquetas "aprendió / no aprendió" ---------- */
+const todayISO = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+views.labels = async (msg) => {
+  const box = $('#scr-labels');
+  if (backend.mode !== 'remote' || !backend.teacher) {
+    box.innerHTML = `<div class="hdr">${backBtn('menu')}<h2>Panel docente</h2></div>
+      <div class="panel"><p>El panel docente necesita el servidor. Abre el juego con <code>?api=</code>.</p></div>`;
+    return;
+  }
+  if (!state.labelDate) state.labelDate = todayISO();
+  box.innerHTML = `<div class="hdr">${backBtn('menu')}<h2>Panel docente</h2></div><div class="panel"><p class="muted" role="status">Cargando alumnos…</p></div>`;
+  let data;
+  try { data = await backend.teacher.students(); }
+  catch (e) {
+    box.innerHTML = `<div class="hdr">${backBtn('menu')}<h2>Panel docente</h2></div>
+      <div class="msg err">${e.code === 'forbidden' ? 'Tu cuenta no tiene rol docente.' : 'No se pudo cargar la lista de alumnos.'}</div>`;
+    return;
+  }
+  if ($('#scr-labels').hidden) return;
+  const ids = data.levels, students = data.students;
+  let usable = 0, total = 0;
+  students.forEach(s => ids.forEach(id => { const l = s.levels[id]; if (l.label) { total++; if (l.done) usable++; } }));
+  const cell = (s, id) => {
+    const l = s.levels[id], lab = l.label ? l.label.label : null, can = l.done > 0;
+    const title = can ? '' : 'title="Todavía no completó este nivel: no hay intento para asociar a la evaluación"';
+    return `<td><div class="lcell">
+      <span class="${can ? '' : 'muted'}">${can ? `${l.best} pts · ${l.tries} int.` : (l.tries ? 'sin completar' : '—')}</span>
+      <div class="lbtns">
+        <button class="lbtn yes ${lab === 1 ? 'on' : ''}" data-act="label" data-s="${s.id}" data-l="${id}" data-v="1" ${can ? '' : 'disabled'} ${title} aria-pressed="${lab === 1}" aria-label="${esc(s.name)}, ${id}: aprendió">✔</button>
+        <button class="lbtn no ${lab === 0 ? 'on' : ''}" data-act="label" data-s="${s.id}" data-l="${id}" data-v="0" ${can ? '' : 'disabled'} ${title} aria-pressed="${lab === 0}" aria-label="${esc(s.name)}, ${id}: no aprendió">✘</button>
+      </div></div></td>`;
+  };
+  box.innerHTML = `
+    <div class="hdr">${backBtn('menu')}<h2>Panel docente</h2></div>
+    <div class="panel" style="margin-bottom:16px">
+      <h3>Evaluaciones para entrenar el SVM</h3>
+      <p>Marca <strong>✔ aprendió</strong> o <strong>✘ no aprendió</strong> según <strong>tu evaluación fuera del juego</strong>
+        (una actividad en papel, una pregunta oral, lo que observaste en clase). No te guíes por el puntaje de la tabla:
+        si copias el puntaje, el modelo solo aprende a repetirlo.</p>
+      <p class="muted">Cada marca se asocia al último intento del alumno en ese nivel <em>anterior</em> a la fecha de evaluación.
+        Si vuelves a marcar, queda una evaluación nueva con esa fecha (el historial se conserva).</p>
+      <div class="lform">
+        <label for="l-date"><strong>Fecha de la evaluación</strong></label>
+        <input type="date" id="l-date" value="${state.labelDate}" max="${todayISO()}">
+        <button class="btn small" data-act="dataset">⬇ Descargar datos para entrenar (CSV)</button>
+      </div>
+      <p class="muted" style="margin:0">${total} niveles evaluados · ${usable} con intento completado (útiles para entrenar) · ${students.length} alumnos</p>
+      <div id="lab-msg" aria-live="polite">${msg ? `<div class="msg ${msg.ok ? 'ok' : 'err'}">${esc(msg.text)}</div>` : ''}</div>
+    </div>
+    ${students.length ? `<div class="tablewrap"><table class="ltable">
+      <thead><tr><th>Alumno</th>${ids.map(id => { const lv = levelById(id); return `<th>${esc(gameById(lv.game_id).name.split(' ')[0])} ${lv.number}</th>`; }).join('')}</tr></thead>
+      <tbody>${students.map(s => `<tr><td><strong>${esc(s.name)}</strong><br><span class="muted" style="font-size:.85rem">${esc(s.email)}</span></td>${ids.map(id => cell(s, id)).join('')}</tr>`).join('')}</tbody>
+    </table></div>` : '<div class="panel"><p>Todavía no hay alumnos registrados en el servidor.</p></div>'}`;
+  $('#l-date').addEventListener('change', e => { state.labelDate = e.target.value || todayISO(); });
+};
+async function saveLabel(d, el) {
+  const date = state.labelDate || todayISO();
+  const assessed = date === todayISO() ? undefined : new Date(date + 'T23:59:59').toISOString();
+  el.disabled = true;
+  try {
+    await backend.teacher.addLabel({student_id: d.s, level_id: d.l, label: +d.v, assessed_at: assessed});
+    views.labels({ok: true, text: `Guardado: ${d.v === '1' ? 'aprendió' : 'no aprendió'} (${d.l}).`});
+  } catch (e) {
+    el.disabled = false;
+    const m = $('#lab-msg'); if (m) m.innerHTML = '<div class="msg err">No se pudo guardar la evaluación. Revisa la conexión.</div>';
+  }
+}
+async function downloadDataset() {
+  const m = $('#lab-msg');
+  try {
+    const text = await backend.teacher.datasetCSV();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], {type: 'text/csv'}));
+    a.download = 'cgame_dataset.csv'; document.body.appendChild(a); a.click(); a.remove();
+    if (m) m.innerHTML = '<div class="msg ok">Descargado: cgame_dataset.csv (sin nombres ni correos).</div>';
+  } catch (e) { if (m) m.innerHTML = '<div class="msg err">No se pudo descargar el CSV.</div>'; }
+}
 
 /* ---------- Estudiante de ejemplo ---------- */
 async function seedDemo() {
@@ -1464,6 +1568,8 @@ const actions = {
   exit: () => { $('#exit-box').hidden = false; },
   'exit-no': () => { $('#exit-box').hidden = true; },
   'exit-yes': async () => { await abandonAttempt(); go('levels'); },
+  label: (d, el) => saveLabel(d, el),
+  dataset: downloadDataset,
   'copy-csv': async () => {
     const ta = $('#csv'), box = $('#t-msg'); let ok = false;
     try { await navigator.clipboard.writeText(ta.value); ok = true; } catch (e) {}
@@ -1492,7 +1598,46 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- Arranque ---------- */
+/* Despierta el servidor (los planes gratuitos lo duermen) y avisa si no responde */
+async function wakeServer(maxSeconds = 75) {
+  const box = document.getElementById('scr-splash');
+  SCREENS.forEach(s => { $('#scr-' + s).hidden = s !== 'splash'; });
+  const started = Date.now();
+  while ((Date.now() - started) / 1000 < maxSeconds) {
+    box.innerHTML = `<div class="splash"><div class="splash-inner">
+      <div class="cody-big">${robotSVG('hmm')}</div>
+      <h1 class="wordmark" aria-label="CGAME"><span>C</span><span>G</span><span>A</span><span>M</span><span>E</span></h1>
+      <p class="lead" role="status">Despertando el servidor… puede tardar hasta un minuto la primera vez.</p>
+      <p class="muted">${Math.round((Date.now() - started) / 1000)} s</p></div></div>`;
+    try {
+      const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(API_BASE.replace(/\/$/, '') + '/health', {signal: ctrl.signal});
+      clearTimeout(t);
+      if (res.ok) return true;
+    } catch (e) {}
+    await sleep(2500);
+  }
+  return false;
+}
+function offlineChoice() {
+  const local = location.origin + location.pathname;
+  $('#scr-splash').innerHTML = `<div class="splash"><div class="splash-inner">
+    <div class="cody-big">${robotSVG('hmm')}</div>
+    <h1 class="wordmark" aria-label="CGAME"><span>C</span><span>G</span><span>A</span><span>M</span><span>E</span></h1>
+    <p class="lead">No pudimos conectar con el servidor de CGAME.</p>
+    <div class="stack">
+      <button class="btn primary big" onclick="location.reload()">Reintentar</button>
+      <a class="btn big" href="${local}">Jugar sin conexión (este dispositivo)</a>
+    </div>
+    <p class="muted" style="font-size:.95rem">Sin conexión, tu progreso se guarda solo en este navegador y no llega al docente.</p>
+  </div></div>`;
+}
 (async function boot() {
+  if (backend.mode === 'remote') {
+    const ok = await wakeServer();
+    if (!ok) return offlineChoice();
+    try { const m = await backend.serverModel(); if (m && m.w && m.w.length === MODEL.w.length) Object.assign(MODEL, m); } catch (e) {}
+  }
   try {
     const u = await backend.restore();
     if (u) { state.user = u; await loadUserData(); return go('menu'); }

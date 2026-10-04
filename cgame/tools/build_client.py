@@ -1,4 +1,4 @@
-"""Genera client/cgame.html inyectando los niveles compartidos y el modelo SVM entrenado.
+"""Genera client/index.html inyectando los niveles compartidos y el modelo SVM entrenado.
 
 Uso (desde la raíz del proyecto):  python tools/build_client.py
 """
@@ -15,6 +15,6 @@ for marker, payload in (("/*__LEVELS_JSON__*/null", levels), ("/*__SVM_MODEL__*/
     # "</" se escapa para que el JSON nunca cierre la etiqueta <script>
     template = template.replace(marker, json.dumps(payload, ensure_ascii=False).replace("</", "<\\/"))
 
-out = ROOT / "client" / "cgame.html"
+out = ROOT / "client" / "index.html"
 out.write_text(template, encoding="utf-8")
 print("Generado", out, f"({out.stat().st_size / 1024:.0f} KB)")

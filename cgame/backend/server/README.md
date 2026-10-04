@@ -1,6 +1,6 @@
 # Servidor de CGAME (API real, con el SVM entrenado corriendo del lado del servidor)
 
-Este servidor (Flask) expone exactamente los endpoints que `client/cgame.html` ya sabe
+Este servidor (Flask) expone exactamente los endpoints que `client/index.html` ya sabe
 consumir cuando lo abres con `?api=https://tu-servidor/api`. No reimplementa el SVM:
 importa `backend/recommender/` tal cual (`compute_result`, `recommend`, `LinearSVM`) y
 usa los mismos coeficientes de `backend/data/svm_model.json` que ya viste en el juego.
@@ -18,11 +18,11 @@ export CGAME_SECRET_KEY="$(python3 -c 'import secrets;print(secrets.token_hex(32
 python app.py
 ```
 
-Verás `Escuchando en http://0.0.0.0:5057/api`. Ahora abre `client/cgame.html` (el
+Verás `Escuchando en http://0.0.0.0:5057/api`. Ahora abre `client/index.html` (el
 archivo local, no el publicado) agregando el parámetro:
 
 ```
-client/cgame.html?api=http://127.0.0.1:5057/api
+client/index.html?api=http://127.0.0.1:5057/api
 ```
 
 Regístrate y juega: los datos ya se están guardando en `cgame.db` (SQLite) y la
@@ -98,31 +98,89 @@ Caddy obtiene el certificado HTTPS automáticamente.
 
 ## Qué hace y qué no hace este servidor
 
-- Implementa exactamente los 6 endpoints que el cliente espera:
-  `POST /register`, `POST /login`, `GET /me`, `GET /attempts`, `POST /attempts`,
-  `GET /recommendation` — todos bajo `/api`.
+- Endpoints del juego (todos bajo `/api`): `POST /register`, `POST /login`, `GET /me`,
+  `GET /attempts`, `POST /attempts/start`, `POST /attempts`, `GET /recommendation`,
+  `GET /model`, `GET /health`.
+- Endpoints del docente (requieren rol `teacher`): `GET /teacher/students`,
+  `POST /teacher/labels`, `GET /teacher/labels`, `DELETE /teacher/labels/<id>`,
+  `GET /teacher/dataset.csv`.
 - Cada `POST /attempts` completado llama a `recommend(MODEL, historial)` — la misma
   función de `backend/recommender/recommend.py`, con el modelo entrenado — y guarda la
   recomendación para que `GET /recommendation` la devuelva.
-- Guarda todo en SQLite (`users`, `attempts`, `recommendations`) — suficiente para un
-  salón de clases; si necesitas más escala, cambia `sqlite3` por Postgres sin tocar la
-  lógica de `recommender/`.
-- **Aviso de seguridad honesto**: el navegador ya calcula el puntaje antes de
-  enviarlo (`score`, `accuracy`, etc.), no los eventos crudos del intento. Para un
-  prototipo o una clase esto es razonable, pero un estudiante con conocimientos técnicos
-  podría enviar un puntaje falso directamente a la API. Si esto va a tener peso en una
-  calificación real, el siguiente paso sería reenviar los eventos crudos (aciertos,
-  fallos, movimientos) y recalcular `compute_result` del lado del servidor antes de
-  guardar — la función ya existe en `recommender/scoring.py`, solo faltaría cambiar qué
-  datos manda el cliente.
-- No implementa recuperación de contraseña ni verificación de correo (no hacía falta
-  para el prototipo). Se puede agregar sin tocar el resto.
+- Guarda todo en SQLite (`users`, `attempts`, `recommendations`, `attempt_sessions`,
+  `teacher_labels`). Al arrancar, migra sola una base de la versión anterior: solo
+  agrega tablas y columnas, no borra nada.
+- **El puntaje lo calcula el servidor.** El juego envía los eventos crudos del intento
+  (cada flecha, cada "Ejecutar", cada pista, con su segundo). El servidor los vuelve a
+  jugar sobre el mapa real (`recommender/replay.py`) y calcula aciertos, fallos,
+  movimientos, errores, pistas y puntaje con `recommender/scoring.py`. Lo que el cliente
+  diga sobre `score`, `accuracy`, `errors`, etc. se ignora. Un intento solo cuenta como
+  completado si el programa enviado realmente resuelve el nivel; eventos imposibles
+  (un "Ejecutar" con un programa distinto del armado, más flechas de las permitidas,
+  tiempos que retroceden…) se rechazan con `400 invalid_events`.
+- **El servidor cronometra.** Al pulsar "¡Empezar!" el juego pide `POST /attempts/start`
+  y recibe el `attempt_id`. Al terminar, si el cliente dice que tardó menos de lo que
+  midió el servidor (con 10 s de tolerancia), vale el tiempo del servidor. Esos intentos
+  quedan con `verified = 1`. Los de versiones viejas del juego quedan con
+  `verified = 0`, y el entrenamiento los ignora salvo que se pida lo contrario.
+- **Límite honesto:** nadie puede inventar un puntaje ni un intento imposible, pero un
+  estudiante con conocimientos técnicos podría programar un bot que juegue bien por él.
+  Eso no se puede impedir desde el servidor.
+- No implementa recuperación de contraseña ni verificación de correo.
 
-## Reentrenar el modelo con datos reales
+## Aprendizaje supervisado con datos reales (paso a paso)
 
-Cuando tengas intentos reales guardados en `cgame.db`, puedes exportarlos y usarlos en
-vez de los casos simulados de `recommender/simulate.py` para reentrenar
-(`recommender/model.py::train`). El resto del sistema (cliente, servidor, endpoints)
-no cambia: solo se reemplaza `backend/data/svm_model.json` por el nuevo modelo entrenado
-y se reconstruye el cliente con `python tools/build_client.py` si también quieres
-actualizar la copia que corre en el navegador cuando se usa sin servidor.
+Hasta ahora el SVM se entrenó con casos simulados (`recommender/simulate.py`), es decir,
+con etiquetas inventadas por el programa. Para que aprenda de alumnos reales hacen falta
+etiquetas reales: **la evaluación del docente, hecha fuera del juego**.
+
+1. **Actualizar el servidor.** Sube el código nuevo (en PythonAnywhere: consola Bash →
+   `git pull` en la carpeta del proyecto) y recarga la app (pestaña **Web → Reload**).
+   La base existente se migra sola al arrancar.
+2. **Crear la cuenta docente.** El docente se registra en el juego como cualquier
+   usuario. Luego, en la consola del servidor:
+   ```bash
+   cd backend/server
+   python manage.py make-teacher correo-del-docente@escuela.edu
+   ```
+   Al volver a entrar, el menú muestra **"Panel docente: evaluar alumnos"**.
+3. **Los alumnos juegan con el enlace que incluye `?api=`.** Sin `?api=` los datos quedan
+   solo en el navegador y no llegan a la base.
+4. **El docente evalúa.** Tras una actividad en el aula (en papel, oral, observación),
+   abre el panel, elige la fecha de esa evaluación y marca, por alumno y nivel,
+   ✔ *aprendió* o ✘ *no aprendió*. Cada marca se asocia al último intento del alumno en
+   ese nivel **anterior** a la fecha. Importante: la marca debe salir de la evaluación,
+   no del puntaje del juego; si no, el modelo solo aprende a copiar el puntaje.
+5. **Ver si ya alcanza.** `python manage.py stats` muestra cuántos intentos verificados y
+   evaluaciones hay. El script pide, por defecto, al menos 8 alumnos evaluados y 5
+   ejemplos de cada clase. Cuantos más, mejor: con 20–30 alumnos los números empiezan a
+   ser estables.
+6. **Entrenar y comparar** (desde `backend/`):
+   ```bash
+   python -m recommender.train_real --db server/cgame.db
+   ```
+   Separa los alumnos (no los intentos) en entrenamiento y prueba, de modo que ningún
+   alumno aparece en los dos lados. Elige el hiperparámetro C con validación cruzada
+   también agrupada por alumno, y muestra una tabla con exactitud, exactitud
+   balanceada, precisión, recall y F1, calculadas con los alumnos de prueba, para:
+   - el SVM nuevo, entrenado con datos reales;
+   - lo que hace hoy el juego (SVM simulado + puntaje ≥ 60);
+   - el SVM simulado solo;
+   - la regla "puntaje ≥ 60" sola.
+
+   Guarda el modelo en `data/svm_model_real.json` y el informe en
+   `data/real_training_report.json`, **sin tocar el modelo del juego**.
+7. **Instalarlo, solo si es mejor:**
+   ```bash
+   python -m recommender.train_real --db server/cgame.db --install
+   ```
+   Solo reemplaza `data/svm_model.json` si el modelo nuevo supera al actual en exactitud
+   balanceada con los alumnos de prueba (o si se agrega `--force`). Antes guarda una
+   copia del modelo simulado en `data/svm_model.simulado.json`. Después hay que
+   recargar la app web. El juego en modo servidor toma los coeficientes del servidor
+   (`GET /model`), así que no hace falta volver a publicar el HTML.
+
+Otras opciones: `--csv cgame_dataset.csv` entrena desde el CSV que descarga el panel
+docente (sin entrar al servidor), `--which all` usa todos los intentos previos a cada
+evaluación en lugar de solo el último, y `--include-unverified` incluye intentos sin
+cronómetro del servidor.
