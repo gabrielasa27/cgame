@@ -252,6 +252,18 @@ class ServerTest(ApiMixin, unittest.TestCase):
         self.assertEqual(self.c.get("/api/me", headers=h).get_json()["user"]["role"], "teacher")
 
 
+class LabelCorrectionTest(unittest.TestCase):
+    def test_correction_same_day_replaces_but_other_days_are_kept(self):
+        from recommender.dataset import latest_labels
+        rows = [
+            {"id": 1, "student_id": "U-1", "level_id": "G1-L1", "label": 1, "assessed_at": "2026-10-01T14:00:00+00:00"},
+            {"id": 2, "student_id": "U-1", "level_id": "G1-L1", "label": 0, "assessed_at": "2026-10-01T14:03:00+00:00"},
+            {"id": 3, "student_id": "U-1", "level_id": "G1-L1", "label": 1, "assessed_at": "2026-10-08T14:00:00+00:00"},
+            {"id": 4, "student_id": "U-2", "level_id": "G1-L1", "label": 1, "assessed_at": "2026-10-01T14:00:00+00:00"},
+        ]
+        self.assertEqual([r["id"] for r in latest_labels(rows)], [2, 3, 4])
+
+
 class MigrationTest(unittest.TestCase):
     def test_old_database_is_upgraded_without_losing_rows(self):
         path = os.path.join(_TMP, "old.db")

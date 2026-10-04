@@ -68,16 +68,25 @@ def build_examples(attempts: list[dict], labels: list[dict], *, which: str = "la
     return examples, skipped
 
 
+SAME_EVALUATION_HOURS = 12  # marcas del mismo alumno y nivel tan próximas = la misma evaluación
+
+
 def latest_labels(rows: list[dict]) -> list[dict]:
-    """Cada evaluación (alumno + nivel + momento) es un ejemplo distinto y se conserva.
-    Si el docente cargó dos veces la misma evaluación, vale la última que guardó."""
-    seen, out = set(), []
-    for r in sorted(rows, key=lambda r: r["id"], reverse=True):
-        k = (r["student_id"], r["level_id"], r["assessed_at"])
-        if k not in seen:
-            seen.add(k)
-            out.append(r)
-    return out[::-1]
+    """Una evaluación por alumno + nivel + momento.
+
+    Si el docente vuelve a marcar el mismo alumno y nivel con fechas de evaluación a
+    menos de 12 horas entre sí, es una corrección: vale la última marca guardada y la
+    anterior se descarta. Evaluaciones en días distintos se conservan como ejemplos aparte."""
+    kept: dict[tuple, list[dict]] = {}
+    for r in sorted(rows, key=lambda r: r["id"]):           # en el orden en que se guardaron
+        lst = kept.setdefault((r["student_id"], r["level_id"]), [])
+        when = parse_date(r["assessed_at"])
+        same = [i for i, k in enumerate(lst)
+                if abs((parse_date(k["assessed_at"]) - when).total_seconds()) < SAME_EVALUATION_HOURS * 3600]
+        for i in reversed(same):
+            lst.pop(i)
+        lst.append(r)
+    return sorted((r for lst in kept.values() for r in lst), key=lambda r: r["id"])
 
 
 def load_from_db(db_path: str | Path) -> tuple[list[dict], list[dict]]:

@@ -180,6 +180,23 @@ etiquetas reales: **la evaluación del docente, hecha fuera del juego**.
    recargar la app web. El juego en modo servidor toma los coeficientes del servidor
    (`GET /model`), así que no hace falta volver a publicar el HTML.
 
+### Probar con una clase de ejemplo
+
+Para ver el panel lleno y probar el entrenamiento antes de tener alumnos reales:
+
+```bash
+python manage.py demo            # 24 alumnos ficticios juegan a través del servidor + evaluaciones
+python manage.py stats
+cd .. && python -m recommender.train_real --db "$CGAME_DB_PATH"    # sin --install
+python server/manage.py demo --borrar   # antes de usarlo con alumnos reales
+```
+
+Las cuentas de ejemplo terminan en `@demo.cgame` (contraseña `demo1234`;
+la docente es `docente@demo.cgame`). Sus etiquetas salen de una "habilidad" oculta
+inventada, así que los números del entrenamiento solo muestran cómo funciona el proceso,
+no dicen nada sobre alumnos reales. `demo --borrar` elimina solo esas cuentas y todo lo
+suyo; los datos reales no se tocan.
+
 Otras opciones: `--csv cgame_dataset.csv` entrena desde el CSV que descarga el panel
 docente (sin entrar al servidor), `--which all` usa todos los intentos previos a cada
 evaluación en lugar de solo el último, y `--include-unverified` incluye intentos sin
